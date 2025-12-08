@@ -5,17 +5,20 @@ import { v4 as uuidv4 } from 'uuid';
 
 // 导入 ECharts 相关模块
 import { use } from 'echarts/core';
-import { RadarChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components';
+import { RadarChart, BarChart, LineChart } from 'echarts/charts';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import VChart from 'vue-echarts';
 
 // 注册 ECharts 组件
 use([
   RadarChart,
+  BarChart,
+  LineChart,
   TitleComponent,
   TooltipComponent,
   LegendComponent,
+  GridComponent,
   CanvasRenderer
 ]);
 
@@ -267,6 +270,46 @@ const learningStateChartOption = computed(() => {
     };
 });
 
+const EMOTIONS = ['兴奋','自信','好奇','困惑','焦虑','沮丧','愤怒','厌倦'];
+const EMOTION_COLOR_MAP = { '兴奋':'#ff9800','自信':'#1976d2','好奇':'#7b1fa2','困惑':'#5d4037','焦虑':'#d32f2f','沮丧':'#616161','愤怒':'#c62828','厌倦':'#9e9e9e' };
+
+const peakSentimentChartOption = computed(() => {
+  if (!conversationData.value || !conversationData.value.peak_sentiment) return {};
+  const ps = conversationData.value.peak_sentiment;
+  const pos = ps.positive?.valence ?? 0;
+  const neg = ps.negative?.valence ?? 0;
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 24, right: 10, top: 10, bottom: 10 },
+    xAxis: { type: 'value', min: -1, max: 1, axisLabel: { show: false }, axisLine: { show: false }, splitLine: { show: false } },
+    yAxis: { type: 'category', data: ['积极', '消极'], axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: '#777', fontSize: 10 } },
+    series: [{
+      type: 'bar',
+      barWidth: 14,
+      data: [
+        { value: pos, itemStyle: { color: '#2e7d32' } },
+        { value: -Math.abs(neg), itemStyle: { color: '#c62828' } }
+      ]
+    }]
+  };
+});
+
+const emotionTrajectoryChartOption = computed(() => {
+  if (!conversationData.value || !conversationData.value.emotion_trajectory) return {};
+  const traj = conversationData.value.emotion_trajectory;
+  const data = traj.map(t => {
+    const i = EMOTIONS.indexOf(t.emotion);
+    return i < 0 ? null : { value: [t.seq, i], itemStyle: { color: EMOTION_COLOR_MAP[t.emotion] || '#888' } };
+  }).filter(Boolean);
+  return {
+    tooltip: { trigger: 'axis', formatter: (p) => { const point = Array.isArray(p) ? p[0] : p; const idx = point.value[1]; const em = EMOTIONS[idx] || ''; return `#${point.value[0]}: ${em}`; } },
+    grid: { left: 35, right: 10, top: 10, bottom: 20 },
+    xAxis: { type: 'value', axisLabel: { show: false }, axisLine: { show: false }, splitLine: { show: false } },
+    yAxis: { type: 'category', data: EMOTIONS, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: '#777', fontSize: 10 } },
+    series: [{ type: 'line', smooth: true, showSymbol: true, symbolSize: 6, lineStyle: { color: '#90a4ae', width: 2, opacity: 0.8 }, areaStyle: { opacity: 0.06, color: '#90a4ae' }, data }]
+  };
+});
+
 </script>
 
 <template>
@@ -315,8 +358,22 @@ const learningStateChartOption = computed(() => {
         
         <!-- 实时视图 -->
         <div v-if="dashboardView === 'realtime'" class="view-container">
+          <div v-if="conversationData" class="kpi-row">
+            <div class="kpi-card">
+              <div class="kpi-title">主导情感</div>
+              <div class="kpi-value">{{ conversationData.dominant_emotion }}</div>
+            </div>
+            <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(conversationData.sentiment_stability * 100) }">
+              <div class="ring"><span>{{ (conversationData.sentiment_stability * 100).toFixed(0) }}%</span></div>
+              <div class="kpi-title">情感稳定性</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">趋势</div>
+              <div class="kpi-badge" :class="`trend-${conversationData.valence_trend}`">{{ conversationData.valence_trend }}</div>
+            </div>
+          </div>
           <details class="data-section" open>
-            <summary><h3>当前会话</h3></summary>
+            <summary><h3>详细数据</h3></summary>
             <div v-if="conversationData" class="data-content conversation-data">
               <div class="grid-item"><strong>ID:</strong> <span>{{ conversationData.conversation_id.substring(0, 8) }}...</span></div>
               <div class="grid-item"><strong>总消息数:</strong> <span>{{ conversationData.total_messages }}</span></div>
@@ -325,19 +382,12 @@ const learningStateChartOption = computed(() => {
               <div class="grid-item"><strong>情感稳定性:</strong> <span>{{ conversationData.sentiment_stability.toFixed(3) }}</span></div>
               <div class="grid-item"><strong>持续时长 (分):</strong> <span>{{ conversationData.duration_minutes }}</span></div>
               <div class="grid-item grid-span-2">
-                <strong>情感峰值:</strong> 
-                <span class="peak-sentiment">
-                  <span v-if="conversationData.peak_sentiment.positive">😊 V: {{ conversationData.peak_sentiment.positive.valence.toFixed(2) }}</span>
-                  <span v-if="conversationData.peak_sentiment.negative">😞 V: {{ conversationData.peak_sentiment.negative.valence.toFixed(2) }}</span>
-                </span>
+                <strong>情感峰值:</strong>
+                <v-chart class="mini-chart" :option="peakSentimentChartOption" autoresize />
               </div>
               <div class="grid-item grid-span-2">
                 <strong>情感轨迹:</strong>
-                <div class="trajectory-container">
-                  <span v-for="t in conversationData.emotion_trajectory" :key="t.seq" class="trajectory-item">
-                    {{ t.seq }}:{{ t.emotion }}
-                  </span>
-                </div>
+                <v-chart class="mini-chart" :option="emotionTrajectoryChartOption" autoresize />
               </div>
               <div class="grid-item grid-span-2 timestamp">最后更新: {{ new Date(conversationData.last_updated_at).toLocaleTimeString() }}</div>
             </div>
@@ -406,6 +456,20 @@ const learningStateChartOption = computed(() => {
         <!-- 用户画像视图 -->
         <div v-if="dashboardView === 'profile'" class="view-container">
           <div v-if="profileData" class="profile-view">
+            <div class="kpi-row">
+              <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(profileData.engagement_index * 100) }">
+                <div class="ring"><span>{{ (profileData.engagement_index * 100).toFixed(0) }}%</span></div>
+                <div class="kpi-title">投入度</div>
+              </div>
+              <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round((1 - profileData.frustration_index) * 100) }">
+                <div class="ring"><span>{{ ((1 - profileData.frustration_index) * 100).toFixed(0) }}%</span></div>
+                <div class="kpi-title">抗压力</div>
+              </div>
+              <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(profileData.profile_confidence * 100) }">
+                <div class="ring"><span>{{ (profileData.profile_confidence * 100).toFixed(0) }}%</span></div>
+                <div class="kpi-title">画像可信度</div>
+              </div>
+            </div>
             <div class="chart-container">
               <v-chart class="chart" :option="emotionProfileChartOption" autoresize />
               <v-chart class="chart" :option="learningStateChartOption" autoresize />
@@ -571,6 +635,7 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .peak-sentiment { display: flex; gap: 15px; font-size: 0.9em; }
 .trajectory-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .trajectory-item { background-color: #eef; color: #557; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+.mini-chart { width: 100%; height: 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: #fcfcfc; }
 .timestamp { font-size: 0.8em; color: #aaa; text-align: right; grid-column: span 2; }
 
 .vda-summary { font-family: monospace; font-size: 0.9em; display: flex; gap: 10px; }
@@ -709,4 +774,17 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .model-name {
   word-break: break-all;
 }
+
+.kpi-row { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.kpi-card { min-width:180px; background: var(--tech-card, var(--bg-white)); border: 1px solid var(--tech-border, var(--border-color)); border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 18px rgba(0,0,0,0.12); display:flex; align-items:center; justify-content:space-between; color: var(--tech-text, var(--text-dark)); }
+.kpi-title { font-size: 0.85em; color: var(--tech-subtle, var(--text-light)); }
+.kpi-value { font-size: 1.2em; font-weight: 700; font-family: monospace; }
+.kpi-badge { border: 1px solid var(--tech-border, var(--border-color)); border-radius: 999px; padding: 4px 10px; font-weight:600; font-size:0.85em; }
+.trend-上升 { color: #00e5ff; background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.35); }
+.trend-下降 { color: #ff5252; background: rgba(255,82,82,0.12); border-color: rgba(255,82,82,0.35); }
+.trend-平稳 { color: #8aa6c1; background: rgba(138,166,193,0.12); border-color: rgba(138,166,193,0.35); }
+.kpi-ring { gap:12px; }
+.kpi-ring .ring { width:80px; height:80px; border-radius:50%; background: conic-gradient(var(--tech-accent, var(--primary-color)) calc(var(--progress)*1%), rgba(102,224,255,0.08) 0); display:flex; align-items:center; justify-content:center; position:relative; border: 1px solid var(--tech-border, var(--border-color)); box-shadow: 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 24px rgba(102,224,255,0.08); }
+.kpi-ring .ring::after { content:""; position:absolute; width:64px; height:64px; border-radius:50%; background: var(--tech-card, var(--bg-white)); box-shadow: inset 0 0 0 1px var(--tech-border, var(--border-color)); }
+.kpi-ring .ring span { position:relative; color: var(--tech-text, var(--text-dark)); font-weight:600; font-family: monospace; }
 </style>
