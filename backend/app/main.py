@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.endpoints import analysis, profiles
 
-app = FastAPI(title="共情理解演示系统后端")
+app = FastAPI(title="情感分析演示系统后端")
 
 app.add_middleware(
     CORSMiddleware,

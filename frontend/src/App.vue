@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 // 导入 ECharts 相关模块
 import { use } from 'echarts/core';
-import { RadarChart, BarChart, LineChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
+import { RadarChart, BarChart, LineChart, ScatterChart } from 'echarts/charts';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent, MarkLineComponent, VisualMapComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import VChart from 'vue-echarts';
 
@@ -15,10 +15,13 @@ use([
   RadarChart,
   BarChart,
   LineChart,
+  ScatterChart,
   TitleComponent,
   TooltipComponent,
   LegendComponent,
   GridComponent,
+  MarkLineComponent,
+  VisualMapComponent,
   CanvasRenderer
 ]);
 
@@ -271,7 +274,16 @@ const learningStateChartOption = computed(() => {
 });
 
 const EMOTIONS = ['兴奋','自信','好奇','困惑','焦虑','沮丧','愤怒','厌倦'];
-const EMOTION_COLOR_MAP = { '兴奋':'#ff9800','自信':'#1976d2','好奇':'#7b1fa2','困惑':'#5d4037','焦虑':'#d32f2f','沮丧':'#616161','愤怒':'#c62828','厌倦':'#9e9e9e' };
+const EMOTION_COLOR_MAP = {
+  '兴奋': '#FF6F00', // 亮橙
+  '自信': '#0066FF', // 正蓝
+  '好奇': '#8B00FF', // 亮紫
+  '困惑': '#795548', // 深棕
+  '焦虑': '#B71C1C', // 深红
+  '沮丧': '#424242', // 深灰
+  '愤怒': '#FF1744', // 鲜红
+  '厌倦': '#9E9E9E'  // 中灰
+};
 
 const peakSentimentChartOption = computed(() => {
   if (!conversationData.value || !conversationData.value.peak_sentiment) return {};
@@ -297,16 +309,90 @@ const peakSentimentChartOption = computed(() => {
 const emotionTrajectoryChartOption = computed(() => {
   if (!conversationData.value || !conversationData.value.emotion_trajectory) return {};
   const traj = conversationData.value.emotion_trajectory;
-  const data = traj.map(t => {
-    const i = EMOTIONS.indexOf(t.emotion);
-    return i < 0 ? null : { value: [t.seq, i], itemStyle: { color: EMOTION_COLOR_MAP[t.emotion] || '#888' } };
-  }).filter(Boolean);
+
+  const seqMap = {};
+  messageHistory.value.forEach(m => { seqMap[m.sequence] = m; });
+
+  const derived = traj.map(t => {
+    const m = seqMap[t.seq];
+    const v = (m?.valence ?? t.valence ?? 0);
+    const a = (m?.arousal ?? t.arousal ?? 0);
+    const em = t.emotion ?? m?.primary_emotion;
+    return { seq: t.seq, v, a, em };
+  });
+
+  const lineData = derived.map(d => [d.seq, d.v]);
+  const bubbles = derived.map(d => ({ value: [d.seq, d.v, d.a], name: d.em, itemStyle: { color: EMOTION_COLOR_MAP[d.em] || '#888' } }));
+
+  const bubbleSize = (data) => {
+    const a = data && Array.isArray(data) ? (data[2] ?? 0) : 0;
+    return 6 + Math.round(a * 14);
+  };
+
   return {
-    tooltip: { trigger: 'axis', formatter: (p) => { const point = Array.isArray(p) ? p[0] : p; const idx = point.value[1]; const em = EMOTIONS[idx] || ''; return `#${point.value[0]}: ${em}`; } },
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      formatter: (p) => {
+        const val = p.value;
+        const isArr = Array.isArray(val);
+        const seq = isArr ? (val[0] ?? '') : (p.axisValue ?? '');
+        const v = isArr ? (val[1] ?? 0) : (typeof val === 'number' ? val : 0);
+        const a = isArr ? (val[2] ?? (seqMap[seq]?.arousal ?? 0)) : (seqMap[seq]?.arousal ?? 0);
+        const em = p.name || (seqMap[seq]?.primary_emotion || '');
+        return `<div style="padding:6px 8px;border-radius:8px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+          <div style="font-weight:600;margin-bottom:4px;">#${seq} ${em}</div>
+          <div style="font-size:12px;color:#555;">Valence: <b style="color:${v>=0?'#2e7d32':'#c62828'}">${(v ?? 0).toFixed(3)}</b></div>
+          <div style="font-size:12px;color:#555;">Arousal: <b>${(a ?? 0).toFixed(3)}</b></div>
+        </div>`;
+      }
+    },
     grid: { left: 35, right: 10, top: 10, bottom: 20 },
-    xAxis: { type: 'value', axisLabel: { show: false }, axisLine: { show: false }, splitLine: { show: false } },
-    yAxis: { type: 'category', data: EMOTIONS, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: '#777', fontSize: 10 } },
-    series: [{ type: 'line', smooth: true, showSymbol: true, symbolSize: 6, lineStyle: { color: '#90a4ae', width: 2, opacity: 0.8 }, areaStyle: { opacity: 0.06, color: '#90a4ae' }, data }]
+    xAxis: {
+      type: 'value',
+      name: '序号',
+      nameTextStyle: { color: '#999', fontSize: 10 },
+      axisLine: { show: false },
+      axisLabel: { color: '#777', fontSize: 10 },
+      splitLine: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      min: -1,
+      max: 1,
+      name: '愉悦度 (Valence)',
+      nameTextStyle: { color: '#999', fontSize: 10 },
+      axisLine: { show: false },
+      axisLabel: { color: '#777', fontSize: 10 },
+      splitLine: { show: true, lineStyle: { color: '#eee' } }
+    },
+    visualMap: {
+      show: false,
+      dimension: 1,
+      seriesIndex: 0,
+      min: -1,
+      max: 1,
+      inRange: { color: ['#c62828', '#2e7d32'] }
+    },
+    series: [
+      {
+        type: 'line',
+        name: '愉悦度曲线',
+        smooth: true,
+        showSymbol: false,
+        data: lineData,
+        lineStyle: { width: 2 },
+        markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: '#bbb', type: 'dashed', width: 1 } }
+      },
+      {
+        type: 'scatter',
+        name: '情绪印记',
+        data: bubbles,
+        symbol: 'circle',
+        symbolSize: bubbleSize,
+        z: 10
+      }
+    ]
   };
 });
 
@@ -315,7 +401,7 @@ const emotionTrajectoryChartOption = computed(() => {
 <template>
   <div id="app-container">
     <header class="app-header">
-      <h1>共情理解演示系统</h1>
+      <h1>智慧导师-情感分析演示系统</h1>
     </header>
 
     <div class="main-layout">
@@ -323,7 +409,7 @@ const emotionTrajectoryChartOption = computed(() => {
       <div class="chat-panel">
         <div class="conversation-controls">
           <button @click="startNewConversation" :disabled="isFinalizing">
-            {{ isFinalizing ? '分析中...' : '开启新对话 / 结束当前' }}
+            {{ isFinalizing ? '分析中...' : '开启新对话' }}
           </button>
           <span class="conversation-id">ID: {{ conversationId.substring(0, 8) }}...</span>
         </div>
