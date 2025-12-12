@@ -1,0 +1,7 @@
+{
+  "name": "Empathy AI - Multimodal Chat",
+  "description": "A multimodal sentiment analysis and empathy chatbot using Gemini API. Supports text/audio input and provides text+audio responses.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
