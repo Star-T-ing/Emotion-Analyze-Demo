@@ -4,24 +4,23 @@ export enum MessageRole {
   SYSTEM = 'system'
 }
 
+// 聊天消息的结构
 export interface ChatMessage {
   id: string;
   role: MessageRole;
   text: string;
-  audioUrl?: string; // For model responses or user audio playback
-  isAudioMessage?: boolean; // If the user input was audio
+  audioUrl?: string;
+  isAudioMessage?: boolean;
   timestamp: number;
+  analysis?: string;
 }
 
+// 示例场景的结构
 export interface DemoScenario {
   id: string;
   title: string;
   description: string;
-  initialInput: string;
+  initialInput?: string;
+  demoAudioUrl?: string;
   icon: string;
-}
-
-export interface GeminiResponse {
-  text: string;
-  audioBase64?: string;
 }
