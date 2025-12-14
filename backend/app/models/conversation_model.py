@@ -1,6 +1,12 @@
-from sqlalchemy import Column, String, INT, FLOAT, JSON, TIMESTAMP, func, ForeignKey
+from sqlalchemy import Column, String, INT, FLOAT, JSON, TIMESTAMP, func, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from app.db.session import Base
+import enum
+
+class CognitiveState(str, enum.Enum):
+    mastered = "已掌握"
+    exploring = "探索中"
+    struggling = "未掌握"
 
 class Conversation(Base):
     __tablename__ = "conversations"
@@ -14,6 +20,7 @@ class Conversation(Base):
     valence_trend = Column(String, nullable=False)
     emotion_trajectory = Column(JSON, nullable=False)
     peak_sentiment = Column(JSON, nullable=False)
-    last_updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False) # 字段名重命名，更清晰
+    cognitive_state = Column(Enum(CognitiveState), nullable=False)
+    last_updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     messages = relationship("Message", back_populates="conversation")

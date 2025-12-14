@@ -1,6 +1,7 @@
 from datetime import datetime
 from .base_schema import BaseSchema
 from typing import Dict, Any, List
+from app.models.conversation_model import CognitiveState
 
 
 class ConversationSchema(BaseSchema):
@@ -14,4 +15,5 @@ class ConversationSchema(BaseSchema):
     valence_trend: str
     emotion_trajectory: List[Dict[str, Any]]
     peak_sentiment: Dict[str, Any]
+    cognitive_state: CognitiveState
     last_updated_at: datetime

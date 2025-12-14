@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.crud import crud_message, crud_conversation
 from app.models.message_model import Message
 from app.models.anomaly_model import Anomaly
+from app.models.conversation_model import CognitiveState
 from app.services import emotion_analyzer, anomaly_detector
 
 logging.basicConfig(level=logging.INFO)
@@ -137,6 +138,16 @@ def _calculate_conversation_metrics(messages: List[Message]) -> Dict[str, Any]:
         "positive": {"message_id": peak_pos_msg.message_id, "valence": peak_pos_msg.valence},
         "negative": {"message_id": peak_neg_msg.message_id, "valence": peak_neg_msg.valence}
     }
+
+    # cognitive_state (认知状态)
+    last_message = messages[-1]
+    cognitive_state = CognitiveState.exploring # 默认状态为“探索中”
+
+    if last_message.primary_emotion in ["自信", "兴奋"]:
+        cognitive_state = CognitiveState.mastered
+    elif last_message.primary_emotion in ["沮丧", "愤怒", "厌倦", "焦虑"]:
+        cognitive_state = CognitiveState.struggling
+    # 如果是 "困惑" 或 "好奇"，则保持 "探索中" 的状态
     
     start_time = messages[0].timestamp
     # 使用最后一条消息的时间戳来计算时长，更精确
@@ -152,5 +163,6 @@ def _calculate_conversation_metrics(messages: List[Message]) -> Dict[str, Any]:
             "valence_trend": trend,
             "emotion_trajectory": trajectory,
             "peak_sentiment": peak_sentiment,
+            "cognitive_state": cognitive_state
         }
     }

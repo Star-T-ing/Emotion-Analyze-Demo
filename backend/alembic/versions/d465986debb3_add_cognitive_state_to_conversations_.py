@@ -1,8 +1,8 @@
-"""create tables
+"""Add cognitive state to conversations table
 
-Revision ID: 9f1f02af51cf
+Revision ID: d465986debb3
 Revises: 
-Create Date: 2025-12-04 21:05:03.803823
+Create Date: 2025-12-14 14:03:01.857216
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9f1f02af51cf'
+revision: str = 'd465986debb3'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -56,6 +56,7 @@ def upgrade() -> None:
     sa.Column('valence_trend', sa.String(), nullable=False),
     sa.Column('emotion_trajectory', sa.JSON(), nullable=False),
     sa.Column('peak_sentiment', sa.JSON(), nullable=False),
+    sa.Column('cognitive_state', sa.Enum('mastered', 'exploring', 'struggling', name='cognitivestate'), nullable=False),
     sa.Column('last_updated_at', sa.TIMESTAMP(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
     sa.PrimaryKeyConstraint('conversation_id')

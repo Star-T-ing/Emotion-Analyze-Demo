@@ -302,6 +302,7 @@ cd Emotion-Analyze-Demo
 | `valence_trend`       | `String`    | `NOT NULL`                      | **含义**: **情感愉悦度(Valence)的总体走向**。<br>**来源/计算**: 对会话中所有消息的`valence`值按`sequence`进行线性回归，根据斜率判断。枚举值: `'上升'`, `'下降'`, `'平稳'`。<br>**更新时机**: 每次会话有新消息时更新。 |
 | `emotion_trajectory`  | `JSON`      | `NOT NULL`                      | **含义**: 按顺序记录每轮对话的**主导情感及其强度**，形成情感变化轨迹。<br>**来源/计算**: **追加更新**。每有新消息，向JSON数组末尾追加一个对象 `{"seq": 1, "emotion": "困惑", "score": 0.8}`。<br>**更新时机**: 每次会话有新消息时更新。 |
 | `peak_sentiment`      | `JSON`      | `NOT NULL`                      | **含义**: 记录会话中出现的情感**正向与负向峰值**时刻，主要依据`valence`值。<br>**来源/计算**: 维护当前会话中`valence`最高和最低的记录。<br>**示例**: `{"positive": {"message_id": "xxx", "valence": 0.9}, "negative": {"message_id": "yyy", "valence": -0.8}}`<br>**更新时机**: 每次会话有新消息时更新。 |
+| `cognitive_state`     | `ENUM` | `NOT NULL`                      | **含义**: 本次会话当前用户的认知状态。包含“已掌握”、“探索中”、“未掌握”三种。<br>**来源/更新**: 每次根据最近一条消息的情绪状态进行映射。 |
 | `last_updated_at`     | `TIMESTAMP` | `NOT NULL`                      | **含义**: 本次会话综合分析的最后更新时间。<br>**来源/更新**: 每次更新本表记录时更新。 |
 
 

@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, FLOAT, TIMESTAMP, func, ForeignK
 from app.db.session import Base
 import enum
 
-class AnomalyType(str, enum.Enum): # 继承str让其在JSON序列化时更友好
+class AnomalyType(str, enum.Enum):
     Sentiment_Shift = "Sentiment_Shift"
     Sustained_Negativity = "Sustained_Negativity"
     High_Intensity_Distress = "High_Intensity_Distress"

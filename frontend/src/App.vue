@@ -449,6 +449,10 @@ const emotionTrajectoryChartOption = computed(() => {
               <div class="kpi-title">主导情感</div>
               <div class="kpi-value">{{ conversationData.dominant_emotion }}</div>
             </div>
+            <div class="kpi-card">
+              <div class="kpi-title">认知状态</div>
+              <div class="kpi-value">{{ conversationData.cognitive_state }}</div>
+            </div>
             <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(conversationData.sentiment_stability * 100) }">
               <div class="ring"><span>{{ (conversationData.sentiment_stability * 100).toFixed(0) }}%</span></div>
               <div class="kpi-title">情感稳定性</div>
