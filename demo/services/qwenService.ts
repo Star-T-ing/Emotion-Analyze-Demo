@@ -102,28 +102,72 @@ export const getEmotionalAnalysis = async (
 };
 
 /**
- * 第二步: 流式生成共情回复
- * **MODIFIED**: Now accepts a history array.
+ * 辅助函数：为音频数据添加WAV文件头
+ */
+const addWavHeader = (audioData: Uint8Array, sampleRate: number = 24000, numChannels: number = 1, bitsPerSample: number = 16): Blob => {
+  const dataSize = audioData.length;
+  const header = new ArrayBuffer(44);
+  const view = new DataView(header);
+
+  // "RIFF" chunk descriptor
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + dataSize, true); // File size - 8
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+
+  // "fmt " sub-chunk
+  view.setUint32(12, 0x666d7420, false); // "fmt "
+  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+  view.setUint16(22, numChannels, true); // NumChannels
+  view.setUint32(24, sampleRate, true); // SampleRate
+  view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true); // ByteRate
+  view.setUint16(32, numChannels * bitsPerSample / 8, true); // BlockAlign
+  view.setUint16(34, bitsPerSample, true); // BitsPerSample
+
+  // "data" sub-chunk
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, dataSize, true); // Subchunk2Size
+
+  // Combine header and audio data
+  const wavFile = new Uint8Array(header.byteLength + audioData.length);
+  wavFile.set(new Uint8Array(header), 0);
+  wavFile.set(audioData, header.byteLength);
+
+  return new Blob([wavFile], { type: 'audio/wav' });
+};
+
+/**
+ * 第二步: 流式生成共情回复（包含文本和语音）
+ * **MODIFIED**: Now accepts a history array and generates both text and audio.
  */
 export const streamEmpathyResponse = async (
   userInput: string,
   analysis: string,
   history: MessageHistory[],
   onChunk: (text: string) => void,
-  onComplete: () => void,
+  onComplete: (audioUrl?: string) => void,
   onError: (error: Error) => void
 ) => {
   const payload = {
-    model: "qwen3-omni-flash-2025-12-01",
+    model: "qwen3-omni-flash",
     messages: [
       { role: 'system', content: PROMPT_SYSTEM_EMPATHY_GENERATION },
       ...history, // Include conversation history
       { role: 'user', content: getPromptUserEmpathyGeneration(userInput, analysis) }
     ],
+    modalities: ["text", "audio"],
+    audio: {
+      voice: "Cherry",
+      format: "pcm"
+    },
     stream: true,
+    stream_options: {
+      include_usage: true
+    }
   };
   
   let fullEmpathyResponse = '';
+  let audioChunks: Uint8Array[] = [];
 
   try {
     const response = await fetch('/api/compatible-mode/v1/chat/completions', {
@@ -139,29 +183,73 @@ export const streamEmpathyResponse = async (
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = ''; // Buffer for incomplete lines
+    
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         console.log("--- [DEBUG] Final Model Response (Empathy Step) ---");
         console.log(fullEmpathyResponse);
         console.log("-------------------------------------------------");
-        onComplete();
+        
+        // Process audio chunks and create WAV file
+        let audioUrl: string | undefined;
+        if (audioChunks.length > 0) {
+          const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+          const combinedAudio = new Uint8Array(totalLength);
+          let offset = 0;
+          for (const chunk of audioChunks) {
+            combinedAudio.set(chunk, offset);
+            offset += chunk.length;
+          }
+          
+          // Add WAV header and create blob URL
+          const wavBlob = addWavHeader(combinedAudio, 24000, 1, 16);
+          audioUrl = URL.createObjectURL(wavBlob);
+          console.log("--- [DEBUG] Audio generated successfully ---");
+        }
+        
+        onComplete(audioUrl);
         break;
       }
+      
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      buffer += chunk;
+      
+      // Split by newlines but keep the last incomplete line in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep the last incomplete line
+      
       for (const line of lines) {
         if (line.startsWith('data:')) {
           const jsonStr = line.substring(5).trim();
           if (jsonStr && jsonStr !== '[DONE]') {
             try {
               const parsed = JSON.parse(jsonStr);
+              
+              // Handle text content
               if (parsed.choices?.[0]?.delta?.content) {
                 const textChunk = parsed.choices[0].delta.content;
                 fullEmpathyResponse += textChunk;
                 onChunk(textChunk);
               }
-            } catch (e) { /* Silently ignore */ }
+              
+              // Handle audio content
+              if (parsed.choices?.[0]?.delta?.audio) {
+                const audioData = parsed.choices[0].delta.audio.data;
+                if (audioData) {
+                  // Decode base64 audio data
+                  const binaryString = atob(audioData);
+                  const bytes = new Uint8Array(binaryString.length);
+                  for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                  }
+                  audioChunks.push(bytes);
+                }
+              }
+            } catch (e) { 
+              console.error("Error parsing chunk:", e, "Line:", line);
+            }
           }
         }
       }

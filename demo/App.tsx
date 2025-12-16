@@ -58,6 +58,7 @@ const App: React.FC = () => {
         role: MessageRole.MODEL,
         text: '',
         analysis: analysis,
+        isAudioGenerating: true,
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, newModelMsg]);
@@ -73,7 +74,12 @@ const App: React.FC = () => {
             msg.id === modelMsgId ? { ...msg, text: msg.text + chunk } : msg
           ));
         },
-        () => { setIsLoading(false); },
+        (audioUrl) => { 
+          setMessages(prev => prev.map(msg =>
+            msg.id === modelMsgId ? { ...msg, audioUrl, isAudioGenerating: false } : msg
+          ));
+          setIsLoading(false); 
+        },
         (error) => {
           console.error(error);
           setMessages(prev => prev.map(msg =>

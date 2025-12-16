@@ -11,6 +11,7 @@ export interface ChatMessage {
   text: string;
   audioUrl?: string;
   isAudioMessage?: boolean;
+  isAudioGenerating?: boolean;
   timestamp: number;
   analysis?: string;
 }
