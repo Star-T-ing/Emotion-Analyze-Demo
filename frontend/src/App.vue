@@ -43,6 +43,10 @@ const profileError = ref(null);
 
 const dashboardView = ref('realtime'); // 'realtime' or 'profile'
 
+// --- 反馈弹窗状态 ---
+const showFeedbackModal = ref(false);
+const feedbackRating = ref(0);
+const feedbackComment = ref('');
 
 // --- 生命周期钩子 ---
 onMounted(async () => {
@@ -94,8 +98,31 @@ function initializeNewConversation() {
 
 
 async function startNewConversation() {
+  // 如果有消息历史，先显示反馈弹窗
+  if (messageHistory.value.length > 0) {
+    showFeedbackModal.value = true;
+  } else {
+    // 如果没有消息，直接开启新对话
+    initializeNewConversation();
+  }
+}
+
+async function submitFeedbackAndStartNew() {
+  showFeedbackModal.value = false;
   isFinalizing.value = true;
+  
   try {
+    // 记录反馈数据（可以发送到后端）
+    if (feedbackRating.value > 0) {
+      console.log('用户反馈:', {
+        conversationId: conversationId.value,
+        rating: feedbackRating.value,
+        comment: feedbackComment.value
+      });
+      // TODO: 可以在这里调用后端API保存反馈
+      // await axios.post('http://127.0.0.1:8000/api/v1/feedback/', { ... });
+    }
+    
     if (
       conversationId.value &&
       messageHistory.value.length > 0 &&
@@ -106,9 +133,18 @@ async function startNewConversation() {
   } catch (err) {
     console.error("在开启新对话流程中，分析上一个会话失败:", err);
   } finally {
+    // 重置反馈表单
+    feedbackRating.value = 0;
+    feedbackComment.value = '';
     initializeNewConversation();
     isFinalizing.value = false;
   }
+}
+
+function cancelFeedback() {
+  showFeedbackModal.value = false;
+  feedbackRating.value = 0;
+  feedbackComment.value = '';
 }
 
 
@@ -403,6 +439,48 @@ const emotionTrajectoryChartOption = computed(() => {
     <header class="app-header">
       <h1>智慧导师-情感分析演示系统</h1>
     </header>
+
+    <!-- 反馈弹窗 -->
+    <div v-if="showFeedbackModal" class="modal-overlay" @click.self="cancelFeedback">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>对话反馈</h3>
+          <button class="close-btn" @click="cancelFeedback">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="feedback-prompt">请对本次对话进行评价：</p>
+          
+          <div class="rating-container">
+            <div class="stars">
+              <span 
+                v-for="star in 5" 
+                :key="star" 
+                class="star"
+                :class="{ active: star <= feedbackRating }"
+                @click="feedbackRating = star"
+                @mouseenter="feedbackRating = star"
+              >
+                ★
+              </span>
+            </div>
+            <p class="rating-text">{{ feedbackRating > 0 ? `${feedbackRating} 分` : '请选择评分' }}</p>
+          </div>
+
+          <textarea 
+            v-model="feedbackComment" 
+            class="feedback-textarea"
+            placeholder="您可以在此留下更多反馈意见（可选）..."
+            rows="4"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="cancelFeedback">取消</button>
+          <button class="btn-primary" @click="submitFeedbackAndStartNew" :disabled="feedbackRating === 0">
+            提交并开启新对话
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="main-layout">
       <!-- ==================== 左侧：对话与控制 ==================== -->
@@ -877,4 +955,181 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .kpi-ring .ring { width:80px; height:80px; border-radius:50%; background: conic-gradient(var(--tech-accent, var(--primary-color)) calc(var(--progress)*1%), rgba(102,224,255,0.08) 0); display:flex; align-items:center; justify-content:center; position:relative; border: 1px solid var(--tech-border, var(--border-color)); box-shadow: 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 24px rgba(102,224,255,0.08); }
 .kpi-ring .ring::after { content:""; position:absolute; width:64px; height:64px; border-radius:50%; background: var(--tech-card, var(--bg-white)); box-shadow: inset 0 0 0 1px var(--tech-border, var(--border-color)); }
 .kpi-ring .ring span { position:relative; color: var(--tech-text, var(--text-dark)); font-weight:600; font-family: monospace; }
+
+/* 反馈弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-white);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3em;
+  color: var(--text-dark);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f0f0f0;
+  color: var(--text-dark);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.feedback-prompt {
+  margin: 0 0 20px 0;
+  font-size: 1em;
+  color: var(--text-dark);
+}
+
+.rating-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.star {
+  font-size: 2.5em;
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.star:hover {
+  transform: scale(1.1);
+}
+
+.star.active {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.rating-text {
+  font-size: 1em;
+  color: var(--text-light);
+  margin: 0;
+  min-height: 24px;
+}
+
+.feedback-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95em;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: var(--text-dark);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #36a372;
+  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
+}
+
+.btn-primary:disabled {
+  background-color: #a5d8c0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 </style>
