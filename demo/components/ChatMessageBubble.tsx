@@ -29,9 +29,6 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
     if (!message.analysis) return null;
     return (
       <div className="mt-3 pt-3 border-t border-slate-200/80 text-xs text-slate-700">
-        {/* **FIX**: Reverted this part back to a simple div with 'whitespace-pre-wrap'.
-            This will render the plain text analysis report exactly as the model formatted it,
-            preserving all newlines and spaces. The 'font-mono' class helps with alignment. */}
         <div className="whitespace-pre-wrap font-mono bg-slate-50 p-2 rounded">
             {message.analysis}
         </div>
@@ -48,13 +45,13 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
     <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] md:max-w-[70%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
         <span className="text-sm text-slate-400 mb-1.5 px-1 font-medium">{isUser ? '你' : '💝 共情 AI'}</span>
-        <div className={`p-4 rounded-2xl text-sm md:text-base shadow-sm ${isUser ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-100 rounded-bl-none shadow-md'}`}>
+        <div className={`p-4 rounded-2xl text-sm md:text-base shadow-sm ${isUser ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-100 rounded-bl-none shadow-md'}`} style={{ minWidth: message.audioUrl && !message.text?.trim() ? '320px' : 'auto' }}>
           
           {/* User audio messages - show first if present */}
           {isUser && message.audioUrl && (
-            <div className="w-full not-prose">
+            <div className="w-full not-prose" style={{ minHeight: '54px', minWidth: '280px' }}>
                {!message.text?.trim() && (
-                 <div className="text-sm opacity-80 mb-2 flex items-center gap-1.5">
+                 <div className="text-sm opacity-80 mb-3 flex items-center gap-1.5">
                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                      <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
                      <path d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z" />
@@ -66,6 +63,7 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
                  controls 
                  src={message.audioUrl}
                  preload="metadata"
+                 style={{ width: '100%', display: 'block', minHeight: '40px', minWidth: '280px' }}
                />
             </div>
           )}
@@ -79,7 +77,7 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
 
           {/* Audio generation status or player for model responses */}
           {isModel && (message.isAudioGenerating || message.audioUrl) && (
-            <div className={`w-full not-prose ${message.text ? 'mt-3' : ''}`}>
+            <div className={`w-full not-prose ${message.text ? 'mt-3' : ''}`} style={{ minWidth: '280px' }}>
               {message.isAudioGenerating && !message.audioUrl ? (
                 <div className="flex items-center gap-2 text-sm text-slate-500 bg-gradient-to-r from-pink-50 to-indigo-50 px-4 py-2.5 rounded-lg border border-pink-100">
                   <svg className="animate-spin h-4 w-4 text-pink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -93,6 +91,7 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
                   controls 
                   src={message.audioUrl}
                   preload="metadata"
+                  style={{ width: '100%', display: 'block', minHeight: '40px', minWidth: '280px' }}
                 />
               ) : null}
             </div>

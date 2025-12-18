@@ -29,6 +29,42 @@
       .recording-pulse {
         animation: pulse-ring 2s infinite;
       }
+      
+      /* CRITICAL FIX: Audio player styles */
+      audio {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 32px !important;
+        max-height: none !important;
+        display: block !important;
+        outline: none !important;
+      }
+      
+      /* Fix for audio in prose content */
+      .prose audio,
+      .prose-sm audio,
+      .prose-invert audio {
+        margin: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        display: block !important;
+      }
+      
+      /* Ensure audio controls are visible */
+      audio::-webkit-media-controls-panel {
+        display: flex !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+      }
+      
+      audio::-webkit-media-controls-play-button,
+      audio::-webkit-media-controls-timeline,
+      audio::-webkit-media-controls-current-time-display,
+      audio::-webkit-media-controls-time-remaining-display,
+      audio::-webkit-media-controls-mute-button,
+      audio::-webkit-media-controls-volume-slider {
+        display: block !important;
+      }
     </style>
   <script type="importmap">
 {
