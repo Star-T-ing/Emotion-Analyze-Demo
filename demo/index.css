@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix for audio player in prose content */
+.prose audio,
+.prose-sm audio,
+.prose-invert audio {
+  margin: 0;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  display: block;
+}
+
+/* Ensure audio controls are always visible */
+audio {
+  width: 100%;
+  height: auto !important;
+  min-height: 32px;
+  max-height: none !important;
+  display: block !important;
+}
+
+/* Fix for audio in colored backgrounds */
+audio::-webkit-media-controls-panel {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-timeline,
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-media-controls-mute-button,
+audio::-webkit-media-controls-volume-slider {
+  display: block;
+}

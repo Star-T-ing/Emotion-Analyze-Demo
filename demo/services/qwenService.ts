@@ -192,7 +192,9 @@ export const streamEmpathyResponse = async (
         console.log(fullEmpathyResponse);
         console.log("-------------------------------------------------");
         
-        // Process audio chunks and create WAV file
+        // Process MODEL audio chunks and create WAV file
+        // Note: Model audio comes as raw PCM data and needs WAV header added
+        // This is different from user audio which is already in a playable format
         let audioUrl: string | undefined;
         if (audioChunks.length > 0) {
           const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
@@ -203,10 +205,14 @@ export const streamEmpathyResponse = async (
             offset += chunk.length;
           }
           
-          // Add WAV header and create blob URL
+          // Add WAV header to raw PCM data and create blob URL
           const wavBlob = addWavHeader(combinedAudio, 24000, 1, 16);
           audioUrl = URL.createObjectURL(wavBlob);
-          console.log("--- [DEBUG] Audio generated successfully ---");
+          console.log("--- [DEBUG] Model audio generated successfully ---", {
+            totalPCMBytes: totalLength,
+            wavBlobSize: wavBlob.size,
+            wavBlobType: wavBlob.type
+          });
         }
         
         onComplete(audioUrl);

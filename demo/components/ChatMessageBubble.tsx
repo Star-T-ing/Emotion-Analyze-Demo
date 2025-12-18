@@ -10,6 +10,20 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
   const [isAnalysisVisible, setAnalysisVisible] = useState(false);
   const isUser = message.role === MessageRole.USER;
   const isModel = message.role === MessageRole.MODEL;
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (message.audioUrl) {
+      console.log('[DEBUG] ChatMessageBubble rendering with audio:', {
+        role: message.role,
+        isUser,
+        isModel,
+        audioUrl: message.audioUrl,
+        hasText: !!message.text,
+        isAudioMessage: message.isAudioMessage
+      });
+    }
+  }, [message.audioUrl, message.role, isUser, isModel, message.text, message.isAudioMessage]);
 
   const renderAnalysis = () => {
     if (!message.analysis) return null;
@@ -36,16 +50,36 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
         <span className="text-xs text-slate-400 mb-1 px-1">{isUser ? '你' : '共情 AI'}</span>
         <div className={`p-4 rounded-2xl text-sm md:text-base shadow-sm ${isUser ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-100 rounded-bl-none'}`}>
           
+          {/* User audio messages - show first if present */}
+          {isUser && message.audioUrl && (
+            <div className="w-full not-prose">
+               {!message.text?.trim() && (
+                 <div className="text-xs opacity-70 mb-2 flex items-center gap-1">
+                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                     <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
+                     <path d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z" />
+                   </svg>
+                   语音消息
+                 </div>
+               )}
+               <audio 
+                 controls 
+                 src={message.audioUrl}
+                 preload="metadata"
+               />
+            </div>
+          )}
+
           {/* Main message text: Keep using ReactMarkdown as it may contain rich text. */}
-          {message.text && (
-             <div className={markdownWrapperClasses}>
+          {message.text && message.text.trim() && (
+             <div className={`${markdownWrapperClasses} ${isUser && message.audioUrl ? 'mt-3' : ''}`}>
                 <ReactMarkdown>{message.text}</ReactMarkdown>
              </div>
           )}
 
-          {/* Audio generation status or player */}
+          {/* Audio generation status or player for model responses */}
           {isModel && (message.isAudioGenerating || message.audioUrl) && (
-            <div className={`w-full ${message.text ? 'mt-3' : ''}`}>
+            <div className={`w-full not-prose ${message.text ? 'mt-3' : ''}`}>
               {message.isAudioGenerating && !message.audioUrl ? (
                 <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-2 rounded-lg">
                   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -55,15 +89,12 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
                   <span>语音生成中...</span>
                 </div>
               ) : message.audioUrl ? (
-                <audio controls src={message.audioUrl} className="w-full h-10 rounded-lg" />
+                <audio 
+                  controls 
+                  src={message.audioUrl}
+                  preload="metadata"
+                />
               ) : null}
-            </div>
-          )}
-          
-          {/* User audio messages */}
-          {isUser && message.audioUrl && (
-            <div className={`w-full ${message.text ? 'mt-3' : ''}`}>
-               <audio controls src={message.audioUrl} className="w-full h-10 rounded-lg" />
             </div>
           )}
           

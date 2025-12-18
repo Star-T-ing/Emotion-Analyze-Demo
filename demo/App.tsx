@@ -37,6 +37,7 @@ const App: React.FC = () => {
         return { role, content };
       });
 
+    // User audio is already in a playable format (WebM, WAV, etc.), so we can use it directly
     const audioUrl = audioBlob ? URL.createObjectURL(audioBlob) : undefined;
 
     const newUserMsg: ChatMessage = {
@@ -47,6 +48,15 @@ const App: React.FC = () => {
       isAudioMessage: !!audioBlob,
       timestamp: Date.now()
     };
+    
+    console.log('[DEBUG] User message created:', {
+      hasText: !!text,
+      hasAudioBlob: !!audioBlob,
+      audioUrl: audioUrl,
+      audioBlobType: audioBlob?.type,
+      audioBlobSize: audioBlob?.size
+    });
+    
     setMessages(prev => [...prev, newUserMsg]);
 
     try {
@@ -158,7 +168,7 @@ const App: React.FC = () => {
           <p className="text-xs text-slate-500">多模态情感分析与支持助手</p>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-2">尝试演示场景</h2>
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-2">情感共鸣场景</h2>
           <div className="space-y-3">
             {DEMO_SCENARIOS.map(scenario => (
               <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all group disabled:opacity-50">
@@ -208,7 +218,7 @@ const App: React.FC = () => {
               <textarea value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend(); } }} placeholder="输入文字或录制语音..." disabled={isLoading} className="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder-slate-400 resize-none py-3 max-h-32 min-h-[48px]" rows={1}/>
               <button onClick={handleTextSend} disabled={!inputVal.trim() || isLoading} className="shrink-0 mb-1 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-0.5"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></button>
             </div>
-            <div className="text-center mt-2"><p className="text-[10px] text-slate-400">共情 AI 可能会产生关于人物、地点或事实的不准确信息。</p></div>
+            <div className="text-center mt-2"><p className="text-[10px] text-slate-400">AI 可能会产生关于人物、地点或事实的不准确信息。</p></div>
           </div>
         </div>
       </main>
