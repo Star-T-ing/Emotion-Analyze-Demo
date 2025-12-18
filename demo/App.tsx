@@ -159,41 +159,63 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans">
-      <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" /></svg></div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">共情 AI</h1>
+      <aside className="w-full md:w-80 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
+        <div className="p-6 border-b border-slate-100/50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 via-pink-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50 group-hover:shadow-pink-300/60 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 drop-shadow-sm">
+                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+              </svg>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">共情 AI</h1>
+              <p className="text-xs text-slate-500 mt-0.5">倾听·理解·陪伴</p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500">多模态情感分析与支持助手</p>
+          <p className="text-base text-slate-600 leading-relaxed">在这里，你的每一份情绪都值得被看见和理解</p>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-2">情感共鸣场景</h2>
+        <div className="flex-1 overflow-y-auto p-5">
+          <h2 className="text-sm font-semibold text-slate-500 mb-4 px-2">💭 试试这些场景</h2>
           <div className="space-y-3">
             {DEMO_SCENARIOS.map(scenario => (
-              <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all group disabled:opacity-50">
+              <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-4 rounded-xl hover:bg-white hover:shadow-md border border-slate-100 hover:border-pink-200 transition-all group disabled:opacity-50 disabled:hover:shadow-none">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl group-hover:scale-110 transition-transform">{scenario.icon}</span>
-                  <div>
-                    <h3 className="font-semibold text-slate-700 text-sm">{scenario.title}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-1">{scenario.description}</p>
+                  <span className="text-3xl group-hover:scale-110 transition-transform">{scenario.icon}</span>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-800 text-base mb-0.5">{scenario.title}</h3>
+                    <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{scenario.description}</p>
                   </div>
                 </div>
               </button>
             ))}
           </div>
         </div>
-        <div className="p-4 border-t border-slate-100 bg-slate-50">
-          <div className="text-xs text-slate-400 text-center">由 Qwen-Omni-Flash 驱动</div>
+        <div className="p-5 border-t border-slate-100/50 bg-gradient-to-t from-slate-50/50 to-transparent">
+          <div className="text-sm text-slate-400 text-center leading-relaxed">
+            <span className="inline-block">✨ 多模态情感分析与支持助手</span>
+          </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-full relative">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-              <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-6"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-indigo-500"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg></div>
-              <h2 className="text-2xl font-semibold text-slate-800 mb-2">今天感觉怎么样？</h2>
-              <p className="max-w-md text-slate-500">我可以倾听你的声音或阅读你的文字。我会用心感受你的情绪，并给予回应。</p>
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="w-28 h-28 bg-gradient-to-br from-pink-100 via-rose-100 to-indigo-100 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-pink-100/50">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-pink-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-semibold text-slate-800 mb-3">今天过得怎么样？</h2>
+              <p className="max-w-lg text-base text-slate-600 leading-relaxed mb-2">无论是开心、难过、焦虑还是困惑</p>
+              <p className="max-w-lg text-base text-slate-600 leading-relaxed">我都在这里，用心倾听你的每一个字、每一句话</p>
+              <div className="mt-8 flex items-center gap-2 text-sm text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                  <path d="M3.505 2.365A41.369 41.369 0 019 2c1.863 0 3.697.124 5.495.365 1.247.167 2.18 1.108 2.435 2.268a4.45 4.45 0 00-.577-.069 43.141 43.141 0 00-4.706 0C9.229 4.696 7.5 6.727 7.5 8.998v2.24c0 1.413.67 2.735 1.76 3.562l-2.98 2.98A.75.75 0 015 17.25v-3.443c-.501-.048-1-.106-1.495-.172C2.033 13.438 1 12.162 1 10.72V5.28c0-1.441 1.033-2.717 2.505-2.914z" />
+                  <path d="M14 6c-.762 0-1.52.02-2.271.062C10.157 6.148 9 7.472 9 8.998v2.24c0 1.519 1.147 2.839 2.71 2.935.214.013.428.024.642.034.2.009.385.09.518.224l2.35 2.35a.75.75 0 001.28-.531v-2.07c1.453-.195 2.5-1.463 2.5-2.915V8.998c0-1.526-1.157-2.85-2.729-2.936A41.645 41.645 0 0014 6z" />
+                </svg>
+                <span>你可以打字，也可以用语音</span>
+              </div>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto">
@@ -218,7 +240,7 @@ const App: React.FC = () => {
               <textarea value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend(); } }} placeholder="输入文字或录制语音..." disabled={isLoading} className="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder-slate-400 resize-none py-3 max-h-32 min-h-[48px]" rows={1}/>
               <button onClick={handleTextSend} disabled={!inputVal.trim() || isLoading} className="shrink-0 mb-1 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-0.5"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></button>
             </div>
-            <div className="text-center mt-2"><p className="text-[10px] text-slate-400">AI 可能会产生关于人物、地点或事实的不准确信息。</p></div>
+            <div className="text-center mt-2"><p className="text-sm text-slate-400">💡 AI 助手会尽力理解和支持你，但请记得在需要时寻求专业帮助</p></div>
           </div>
         </div>
       </main>
