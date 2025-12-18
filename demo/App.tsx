@@ -157,21 +157,41 @@ const App: React.FC = () => {
     handleSend({ text: inputVal });
   };
 
+  const handleNewConversation = () => {
+    if (isLoading) return;
+    setMessages([]);
+    setInputVal('');
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans">
       <aside className="w-full md:w-80 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
         <div className="p-6 border-b border-slate-100/50">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 via-pink-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50 group-hover:shadow-pink-300/60 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 drop-shadow-sm">
-                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-              </svg>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 via-pink-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50 group-hover:shadow-pink-300/60 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 drop-shadow-sm">
+                  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                </svg>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">共情 AI</h1>
+                <p className="text-xs text-slate-500 mt-0.5">倾听·理解·陪伴</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">共情 AI</h1>
-              <p className="text-xs text-slate-500 mt-0.5">倾听·理解·陪伴</p>
-            </div>
+            {messages.length > 0 && (
+              <button
+                onClick={handleNewConversation}
+                disabled={isLoading}
+                className="shrink-0 p-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:hover:bg-transparent group"
+                title="开启新对话"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+            )}
           </div>
           <p className="text-base text-slate-600 leading-relaxed">在这里，你的每一份情绪都值得被看见和理解</p>
         </div>

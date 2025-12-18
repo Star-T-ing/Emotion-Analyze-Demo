@@ -89,7 +89,7 @@ async function fetchUserProfile() {
 function initializeNewConversation() {
   const newId = uuidv4();
   conversationId.value = newId;
-  conversationLog.value = [{ type: 'system', text: `新对话已开始 (ID: ${newId.substring(0, 8)}...)` }];
+  conversationLog.value = [{ type: 'system', text: `新对话已开始` }];
   conversationData.value = null;
   messageHistory.value = [];
   anomalies.value = {};
@@ -266,17 +266,18 @@ const emotionProfileChartOption = computed(() => {
     const dist = profileData.value.emotion_distribution;
     const total = Math.max(1, Object.values(dist).reduce((a, b) => a + b, 0));
     
-    // 使用全部8种情感
+    // 使用全部8种情感，设置更大的最大值以增加雷达图的形状
+    const maxValue = 0.5; // 将最大值设为0.5，这样雷达图会更大
     const indicator = [
-        { name: '兴奋', max: 1 }, { name: '自信', max: 1 }, { name: '好奇', max: 1 },
-        { name: '困惑', max: 1 }, { name: '焦虑', max: 1 }, { name: '沮丧', max: 1 },
-        { name: '愤怒', max: 1 }, { name: '厌倦', max: 1 }
+        { name: '兴奋', max: maxValue }, { name: '自信', max: maxValue }, { name: '好奇', max: maxValue },
+        { name: '困惑', max: maxValue }, { name: '焦虑', max: maxValue }, { name: '沮丧', max: maxValue },
+        { name: '愤怒', max: maxValue }, { name: '厌倦', max: maxValue }
     ];
     const data = [
       (dist['兴奋'] || 0) / total, (dist['自信'] || 0) / total, (dist['好奇'] || 0) / total,
       (dist['困惑'] || 0) / total, (dist['焦虑'] || 0) / total, (dist['沮丧'] || 0) / total,
       (dist['愤怒'] || 0) / total, (dist['厌倦'] || 0) / total
-    ].map(v => v.toFixed(3));
+    ].map(v => parseFloat(v.toFixed(3)));
 
     return {
         title: { text: '情感特质分布', left: 'center', textStyle: { fontSize: 14, fontWeight: 'normal' } },
@@ -326,17 +327,89 @@ const peakSentimentChartOption = computed(() => {
   const ps = conversationData.value.peak_sentiment;
   const pos = ps.positive?.valence ?? 0;
   const neg = ps.negative?.valence ?? 0;
+  
   return {
-    tooltip: { trigger: 'axis' },
-    grid: { left: 24, right: 10, top: 10, bottom: 10 },
-    xAxis: { type: 'value', min: -1, max: 1, axisLabel: { show: false }, axisLine: { show: false }, splitLine: { show: false } },
-    yAxis: { type: 'category', data: ['积极', '消极'], axisTick: { show: false }, axisLine: { show: false }, axisLabel: { color: '#777', fontSize: 10 } },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e8d5c4',
+      borderWidth: 1,
+      textStyle: { color: '#4e342e', fontSize: 13 },
+      formatter: (params) => {
+        const p = params[0];
+        const val = Math.abs(p.value);
+        const label = p.name === '积极' ? '最积极时刻' : '最消极时刻';
+        return `<div style="padding:4px 6px;">
+          <div style="font-weight:600;margin-bottom:4px;">${label}</div>
+          <div style="font-size:13px;">愉悦度: <b style="color:${p.value >= 0 ? '#66bb6a' : '#ef5350'}">${val.toFixed(3)}</b></div>
+        </div>`;
+      }
+    },
+    grid: { left: 70, right: 40, top: 20, bottom: 20 },
+    xAxis: { 
+      type: 'value', 
+      min: -1, 
+      max: 1,
+      axisLabel: { 
+        show: true,
+        fontSize: 12,
+        color: '#8d6e63',
+        formatter: (val) => val.toFixed(1)
+      },
+      axisLine: { show: true, lineStyle: { color: '#e8d5c4' } },
+      splitLine: { show: true, lineStyle: { color: '#f5f5f5', type: 'dashed' } }
+    },
+    yAxis: { 
+      type: 'category', 
+      data: ['积极峰值', '消极峰值'],
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: { 
+        color: '#6d4c41',
+        fontSize: 13,
+        fontWeight: 500
+      }
+    },
     series: [{
       type: 'bar',
-      barWidth: 14,
+      barWidth: 24,
+      label: {
+        show: true,
+        position: 'right',
+        formatter: (params) => Math.abs(params.value).toFixed(3),
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#4e342e'
+      },
       data: [
-        { value: pos, itemStyle: { color: '#2e7d32' } },
-        { value: -Math.abs(neg), itemStyle: { color: '#c62828' } }
+        { 
+          value: pos, 
+          itemStyle: { 
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 1, y2: 0,
+              colorStops: [
+                { offset: 0, color: '#81c784' },
+                { offset: 1, color: '#66bb6a' }
+              ]
+            },
+            borderRadius: [0, 8, 8, 0]
+          }
+        },
+        { 
+          value: -Math.abs(neg), 
+          itemStyle: { 
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 1, y2: 0,
+              colorStops: [
+                { offset: 0, color: '#ef5350' },
+                { offset: 1, color: '#e53935' }
+              ]
+            },
+            borderRadius: [8, 0, 0, 8]
+          }
+        }
       ]
     }]
   };
@@ -358,17 +431,51 @@ const emotionTrajectoryChartOption = computed(() => {
   });
 
   const lineData = derived.map(d => [d.seq, d.v]);
-  const bubbles = derived.map(d => ({ value: [d.seq, d.v, d.a], name: d.em, itemStyle: { color: EMOTION_COLOR_MAP[d.em] || '#888' } }));
+  const bubbles = derived.map(d => ({ 
+    value: [d.seq, d.v, d.a], 
+    name: d.em, 
+    itemStyle: { 
+      color: EMOTION_COLOR_MAP[d.em] || '#888',
+      borderColor: '#fff',
+      borderWidth: 2,
+      shadowBlur: 6,
+      shadowColor: 'rgba(0,0,0,0.15)'
+    }
+  }));
 
   const bubbleSize = (data) => {
     const a = data && Array.isArray(data) ? (data[2] ?? 0) : 0;
-    return 6 + Math.round(a * 14);
+    return 10 + Math.round(a * 20);
   };
 
+  // 计算统计信息
+  const avgValence = derived.reduce((sum, d) => sum + d.v, 0) / derived.length;
+  const maxValence = Math.max(...derived.map(d => d.v));
+  const minValence = Math.min(...derived.map(d => d.v));
+
   return {
+    title: {
+      text: `情感波动曲线`,
+      subtext: `平均: ${avgValence.toFixed(2)} | 峰值: ${maxValence.toFixed(2)} | 谷值: ${minValence.toFixed(2)}`,
+      left: 'center',
+      top: 5,
+      textStyle: { 
+        fontSize: 14, 
+        fontWeight: 600,
+        color: '#4e342e'
+      },
+      subtextStyle: {
+        fontSize: 11,
+        color: '#8d6e63'
+      }
+    },
     tooltip: {
       trigger: 'item',
       confine: true,
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e8d5c4',
+      borderWidth: 1,
+      textStyle: { fontSize: 13 },
       formatter: (p) => {
         const val = p.value;
         const isArr = Array.isArray(val);
@@ -376,31 +483,65 @@ const emotionTrajectoryChartOption = computed(() => {
         const v = isArr ? (val[1] ?? 0) : (typeof val === 'number' ? val : 0);
         const a = isArr ? (val[2] ?? (seqMap[seq]?.arousal ?? 0)) : (seqMap[seq]?.arousal ?? 0);
         const em = p.name || (seqMap[seq]?.primary_emotion || '');
-        return `<div style="padding:6px 8px;border-radius:8px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
-          <div style="font-weight:600;margin-bottom:4px;">#${seq} ${em}</div>
-          <div style="font-size:12px;color:#555;">Valence: <b style="color:${v>=0?'#2e7d32':'#c62828'}">${(v ?? 0).toFixed(3)}</b></div>
-          <div style="font-size:12px;color:#555;">Arousal: <b>${(a ?? 0).toFixed(3)}</b></div>
+        
+        const emotionColor = EMOTION_COLOR_MAP[em] || '#888';
+        
+        return `<div style="padding:8px 10px;border-radius:10px;">
+          <div style="font-weight:600;margin-bottom:6px;font-size:14px;color:${emotionColor};">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${emotionColor};margin-right:6px;"></span>
+            #${seq} ${em}
+          </div>
+          <div style="font-size:13px;color:#555;margin:3px 0;">
+            愉悦度: <b style="color:${v>=0?'#66bb6a':'#ef5350'};font-size:14px;">${(v ?? 0).toFixed(3)}</b>
+          </div>
+          <div style="font-size:13px;color:#555;margin:3px 0;">
+            唤醒度: <b style="color:#ff8a65;font-size:14px;">${(a ?? 0).toFixed(3)}</b>
+          </div>
         </div>`;
       }
     },
-    grid: { left: 35, right: 10, top: 10, bottom: 20 },
+    grid: { left: 50, right: 30, top: 60, bottom: 35 },
     xAxis: {
       type: 'value',
-      name: '序号',
-      nameTextStyle: { color: '#999', fontSize: 10 },
-      axisLine: { show: false },
-      axisLabel: { color: '#777', fontSize: 10 },
+      name: '消息序号',
+      nameLocation: 'middle',
+      nameGap: 25,
+      nameTextStyle: { 
+        color: '#6d4c41', 
+        fontSize: 12,
+        fontWeight: 500
+      },
+      axisLine: { show: true, lineStyle: { color: '#e8d5c4' } },
+      axisLabel: { 
+        color: '#8d6e63', 
+        fontSize: 11,
+        fontWeight: 500
+      },
       splitLine: { show: false }
     },
     yAxis: {
       type: 'value',
       min: -1,
       max: 1,
-      name: '愉悦度 (Valence)',
-      nameTextStyle: { color: '#999', fontSize: 10 },
-      axisLine: { show: false },
-      axisLabel: { color: '#777', fontSize: 10 },
-      splitLine: { show: true, lineStyle: { color: '#eee' } }
+      name: '愉悦度',
+      nameLocation: 'middle',
+      nameGap: 35,
+      nameTextStyle: { 
+        color: '#6d4c41', 
+        fontSize: 13,
+        fontWeight: 500
+      },
+      axisLine: { show: true, lineStyle: { color: '#e8d5c4' } },
+      axisLabel: { 
+        color: '#8d6e63', 
+        fontSize: 11,
+        fontWeight: 500,
+        formatter: (val) => val.toFixed(1)
+      },
+      splitLine: { 
+        show: true, 
+        lineStyle: { color: '#f5f5f5', type: 'solid' } 
+      }
     },
     visualMap: {
       show: false,
@@ -408,7 +549,7 @@ const emotionTrajectoryChartOption = computed(() => {
       seriesIndex: 0,
       min: -1,
       max: 1,
-      inRange: { color: ['#c62828', '#2e7d32'] }
+      inRange: { color: ['#ef5350', '#ffb74d', '#66bb6a'] }
     },
     series: [
       {
@@ -417,8 +558,36 @@ const emotionTrajectoryChartOption = computed(() => {
         smooth: true,
         showSymbol: false,
         data: lineData,
-        lineStyle: { width: 2 },
-        markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: '#bbb', type: 'dashed', width: 1 } }
+        lineStyle: { width: 3 },
+        areaStyle: {
+          opacity: 0.15,
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(102, 187, 106, 0.3)' },
+              { offset: 0.5, color: 'rgba(255, 183, 77, 0.2)' },
+              { offset: 1, color: 'rgba(239, 83, 80, 0.3)' }
+            ]
+          }
+        },
+        markLine: { 
+          silent: true, 
+          symbol: 'none', 
+          data: [
+            { 
+              yAxis: 0,
+              lineStyle: { color: '#8d6e63', type: 'dashed', width: 2 },
+              label: {
+                show: true,
+                position: 'end',
+                formatter: '',
+                fontSize: 11,
+                color: '#8d6e63'
+              }
+            }
+          ]
+        }
       },
       {
         type: 'scatter',
@@ -426,7 +595,11 @@ const emotionTrajectoryChartOption = computed(() => {
         data: bubbles,
         symbol: 'circle',
         symbolSize: bubbleSize,
-        z: 10
+        z: 10,
+        emphasis: {
+          scale: 1.3,
+          focus: 'self'
+        }
       }
     ]
   };
@@ -437,7 +610,7 @@ const emotionTrajectoryChartOption = computed(() => {
 <template>
   <div id="app-container">
     <header class="app-header">
-      <h1>智慧导师-情感分析演示系统</h1>
+      <h1>智慧导师-情感分析智能体</h1>
     </header>
 
     <!-- 反馈弹窗 -->
@@ -471,6 +644,7 @@ const emotionTrajectoryChartOption = computed(() => {
             class="feedback-textarea"
             placeholder="您可以在此留下更多反馈意见（可选）..."
             rows="4"
+            style="width: calc(100% - 24px);"
           ></textarea>
         </div>
         <div class="modal-footer">
@@ -529,7 +703,7 @@ const emotionTrajectoryChartOption = computed(() => {
             </div>
             <div class="kpi-card">
               <div class="kpi-title">认知状态</div>
-              <div class="kpi-value">{{ conversationData.cognitive_state }}</div>
+              <div class="kpi-value" :class="`cognitive-${conversationData.cognitive_state}`">{{ conversationData.cognitive_state }}</div>
             </div>
             <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(conversationData.sentiment_stability * 100) }">
               <div class="ring"><span>{{ (conversationData.sentiment_stability * 100).toFixed(0) }}%</span></div>
@@ -557,7 +731,6 @@ const emotionTrajectoryChartOption = computed(() => {
                 <strong>情感轨迹:</strong>
                 <v-chart class="mini-chart" :option="emotionTrajectoryChartOption" autoresize />
               </div>
-              <div class="grid-item grid-span-2 timestamp">最后更新: {{ new Date(conversationData.last_updated_at).toLocaleTimeString() }}</div>
             </div>
             <div v-else class="placeholder">发送消息后将显示会话数据...</div>
           </details>
@@ -681,59 +854,72 @@ const emotionTrajectoryChartOption = computed(() => {
 </template>
 
 <style>
-/* 全局样式 */
+/* 全局样式 - 温暖人文配色 */
 :root {
-  --primary-color: #42b883;
-  --secondary-color: #35495e;
-  --danger-color: #e53935;
-  --warning-color: #fdd835;
-  --border-color: #e0e0e0;
-  --bg-light: #f4f6f8;
-  --bg-white: #ffffff;
-  --text-dark: #2c3e50;
-  --text-light: #5a738b;
+  --primary-color: #ff8a65;
+  --primary-hover: #ff7043;
+  --secondary-color: #6d4c41;
+  --accent-color: #ffb74d;
+  --success-color: #81c784;
+  --danger-color: #ef5350;
+  --warning-color: #ffb74d;
+  --border-color: #e8d5c4;
+  --bg-light: #fff8f0;
+  --bg-warm: #fef5ed;
+  --bg-white: #fffbf7;
+  --bg-card: #ffffff;
+  --text-dark: #4e342e;
+  --text-medium: #6d4c41;
+  --text-light: #8d6e63;
+  --shadow-soft: rgba(141, 110, 99, 0.08);
+  --shadow-medium: rgba(141, 110, 99, 0.15);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
   margin: 0;
-  background-color: var(--bg-light);
+  background: linear-gradient(135deg, #fff8f0 0%, #fef5ed 100%);
   color: var(--text-dark);
 }
 
 #app-container { display: flex; flex-direction: column; height: 100vh; }
 
 .app-header {
-  background-color: var(--secondary-color);
-  color: white;
-  padding: 12px 20px;
+  background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+  color: #fff8f0;
+  padding: 16px 20px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px var(--shadow-medium);
   flex-shrink: 0;
+}
+.app-header h1 {
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .main-layout { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; }
 
 /* 聊天面板 */
-.chat-panel { flex: 3; display: flex; flex-direction: column; background: var(--bg-white); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+.chat-panel { flex: 3; display: flex; flex-direction: column; background: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 16px var(--shadow-soft); border: 1px solid var(--border-color); }
 .conversation-controls { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
 .conversation-id { font-size: 0.8em; color: var(--text-light); font-family: monospace; }
 .chat-window { flex: 1; padding: 20px; overflow-y: auto; }
 .message { display: flex; gap: 12px; margin-bottom: 18px; max-width: 90%; }
 .message-user { margin-left: auto; flex-direction: row-reverse; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; background-color: var(--secondary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9em; font-weight: bold; flex-shrink: 0; }
-.message-user .avatar { background-color: var(--primary-color); }
-.message-bot .avatar { background-color: var(--secondary-color); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #bcaaa4 0%, #8d6e63 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9em; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 8px var(--shadow-soft); }
+.message-user .avatar { background: linear-gradient(135deg, #ffab91 0%, #ff8a65 100%); }
+.message-bot .avatar { background: linear-gradient(135deg, #a1887f 0%, #8d6e63 100%); }
 .message-system { justify-content: center; font-size: 0.85em; color: var(--text-light); max-width: 100%; margin: 10px 0; }
 .message-system .avatar { display: none; }
-.message-content p { padding: 10px 15px; border-radius: 12px; margin: 0; line-height: 1.5; background-color: #f0f2f5; }
-.message-user .message-content p { background-color: var(--primary-color); color: white; }
+.message-content p { padding: 12px 16px; border-radius: 16px; margin: 0; line-height: 1.6; background-color: var(--bg-warm); box-shadow: 0 1px 4px var(--shadow-soft); }
+.message-user .message-content p { background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%); color: white; }
 .chat-input-area { display: flex; padding: 15px; border-top: 1px solid var(--border-color); gap: 10px; flex-shrink: 0; }
 .chat-input-area textarea { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; resize: none; font-family: inherit; font-size: 1em; height: 50px; }
 .chat-input-area button { padding: 0 25px; }
-button { border: none; background-color: var(--primary-color); color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: background-color 0.2s, box-shadow 0.2s; font-weight: 500; }
-button:hover { background-color: #36a372; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: none; }
+button { border: none; background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%); color: white; padding: 10px 18px; border-radius: 24px; cursor: pointer; transition: all 0.3s ease; font-weight: 500; box-shadow: 0 2px 8px var(--shadow-soft); }
+button:hover { background: linear-gradient(135deg, #ff7043 0%, #f4511e 100%); box-shadow: 0 4px 12px var(--shadow-medium); transform: translateY(-1px); }
+button:disabled { background: linear-gradient(135deg, #d7ccc8 0%, #bcaaa4 100%); cursor: not-allowed; box-shadow: none; transform: none; }
 
 /* 对话窗口 */
 .avatar svg { width: 24px; height: 24px; }
@@ -753,7 +939,7 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 }
 
 /* 数据面板 */
-.data-panel { flex: 2; background: var(--bg-white); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border-color); padding: 20px; overflow-y: auto; }
+.data-panel { flex: 2; background: var(--bg-card); border-radius: 16px; box-shadow: 0 4px 16px var(--shadow-soft); border: 1px solid var(--border-color); padding: 20px; overflow-y: auto; }
 .data-section { border-bottom: 1px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 15px; }
 .data-section:last-child { border-bottom: none; }
 .data-section summary { cursor: pointer; outline: none; font-weight: 600; display: flex; align-items: center; }
@@ -774,10 +960,10 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .message-summary .seq { font-weight: bold; color: var(--text-dark); font-size: 0.8em; width: 30px; }
 .message-summary .emotion { font-weight: 500; flex: 1; }
 .message-summary .valence { font-family: monospace; }
-.anomaly-tag, .no-anomaly-tag { margin-left: auto; font-size: 0.8em; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
-.anomaly-tag { background-color: var(--warning-color); color: #5d4037; }
-.no-anomaly-tag { background-color: #e8f5e9; color: #388e3c; }
-.message-details { padding: 10px 15px 10px 25px; background: #fafafa; border-top: 1px dashed var(--border-color); }
+.anomaly-tag, .no-anomaly-tag { margin-left: auto; font-size: 0.8em; padding: 2px 8px; border-radius: 12px; font-weight: bold; }
+.anomaly-tag { background-color: #ffe0b2; color: #e65100; }
+.no-anomaly-tag { background-color: #c8e6c9; color: #2e7d32; }
+.message-details { padding: 10px 15px 10px 25px; background: var(--bg-warm); border-top: 1px dashed var(--border-color); }
 .message-details h4 { margin: 10px 0 5px 0; font-size: 1em; }
 .message-details .anomaly-title { color: var(--danger-color); }
 .message-details pre { white-space: pre-wrap; word-break: break-all; background: #eee; padding: 8px; border-radius: 4px; font-size: 0.85em; }
@@ -788,9 +974,10 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .dashboard-header h2 { margin: 0; }
 .view-switcher { display: flex; gap: 5px; }
-.view-switcher button { background-color: #eee; color: var(--text-dark); font-size: 0.9em; padding: 6px 12px; }
-.view-switcher button:disabled { background-color: #f5f5f5; color: #ccc; cursor: not-allowed; }
-.view-switcher button.active { background-color: var(--primary-color); color: white; font-weight: bold; }
+.view-switcher button { background: var(--bg-warm); color: var(--text-medium); font-size: 0.9em; padding: 8px 16px; box-shadow: none; }
+.view-switcher button:hover { background: #ffe0cc; transform: none; }
+.view-switcher button:disabled { background: #f5f5f5; color: #ccc; cursor: not-allowed; }
+.view-switcher button.active { background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%); color: white; font-weight: 600; box-shadow: 0 2px 8px var(--shadow-soft); }
 
 .conversation-data {
   display: grid;
@@ -803,7 +990,7 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .peak-sentiment { display: flex; gap: 15px; font-size: 0.9em; }
 .trajectory-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .trajectory-item { background-color: #eef; color: #557; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
-.mini-chart { width: 100%; height: 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: #fcfcfc; }
+.mini-chart { width: 100%; height: 180px; border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; background: var(--bg-card); box-shadow: 0 2px 8px var(--shadow-soft); }
 .timestamp { font-size: 0.8em; color: #aaa; text-align: right; grid-column: span 2; }
 
 .vda-summary { font-family: monospace; font-size: 0.9em; display: flex; gap: 10px; }
@@ -815,14 +1002,14 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 
 .profile-view { display: flex; flex-direction: column; gap: 20px; }
 .chart-container { display: flex; gap: 10px; width: 100%; height: 300px; }
-.chart { flex: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
+.chart { flex: 1; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; background: var(--bg-card); }
 .profile-details .sub-details { margin-bottom: 10px; }
 .profile-details .sub-content p { display: flex; justify-content: space-between; }
 
 /* 消息详情面板的整体布局 */
 .message-details { 
   padding: 15px 20px; 
-  background: #fdfdfd; 
+  background: var(--bg-warm); 
   border-top: 1px solid var(--border-color);
 }
 
@@ -872,7 +1059,7 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 }
 
 .score-bar {
-  background: linear-gradient(90deg, var(--primary-color), #81c784);
+  background: linear-gradient(90deg, #ffab91, #ff8a65);
   height: 100%;
   border-radius: 4px;
   transition: width 0.3s ease-in-out;
@@ -923,9 +1110,9 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
   display: flex;
   justify-content: space-between; /* 标签和值两端对齐 */
   align-items: center;
-  background-color: #f0f2f5; /* 轻微的背景色以区分 */
+  background-color: var(--bg-warm); /* 轻微的背景色以区分 */
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .meta-label {
@@ -944,16 +1131,31 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 }
 
 .kpi-row { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
-.kpi-card { min-width:180px; background: var(--tech-card, var(--bg-white)); border: 1px solid var(--tech-border, var(--border-color)); border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 18px rgba(0,0,0,0.12); display:flex; align-items:center; justify-content:space-between; color: var(--tech-text, var(--text-dark)); }
+.kpi-card { min-width:180px; background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; box-shadow: 0 4px 12px var(--shadow-soft); display:flex; align-items:center; justify-content:space-between; color: var(--text-dark); transition: all 0.3s ease; }
+.kpi-card:hover { box-shadow: 0 6px 16px var(--shadow-medium); transform: translateY(-2px); }
 .kpi-title { font-size: 0.85em; color: var(--tech-subtle, var(--text-light)); }
 .kpi-value { font-size: 1.2em; font-weight: 700; font-family: monospace; }
+
+/* 认知状态颜色编码 */
+.cognitive-已掌握 { 
+  color: #66bb6a !important; 
+  text-shadow: 0 0 8px rgba(102, 187, 106, 0.3);
+}
+.cognitive-探索中 { 
+  color: #ffb74d !important; 
+  text-shadow: 0 0 8px rgba(255, 183, 77, 0.3);
+}
+.cognitive-未掌握 { 
+  color: #ef5350 !important; 
+  text-shadow: 0 0 8px rgba(239, 83, 80, 0.3);
+}
 .kpi-badge { border: 1px solid var(--tech-border, var(--border-color)); border-radius: 999px; padding: 4px 10px; font-weight:600; font-size:0.85em; }
-.trend-上升 { color: #00e5ff; background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.35); }
-.trend-下降 { color: #ff5252; background: rgba(255,82,82,0.12); border-color: rgba(255,82,82,0.35); }
-.trend-平稳 { color: #8aa6c1; background: rgba(138,166,193,0.12); border-color: rgba(138,166,193,0.35); }
+.trend-上升 { color: #66bb6a; background: rgba(129,199,132,0.15); border-color: rgba(129,199,132,0.4); }
+.trend-下降 { color: #ef5350; background: rgba(239,83,80,0.15); border-color: rgba(239,83,80,0.4); }
+.trend-平稳 { color: #ff8a65; background: rgba(255,138,101,0.15); border-color: rgba(255,138,101,0.4); }
 .kpi-ring { gap:12px; }
-.kpi-ring .ring { width:80px; height:80px; border-radius:50%; background: conic-gradient(var(--tech-accent, var(--primary-color)) calc(var(--progress)*1%), rgba(102,224,255,0.08) 0); display:flex; align-items:center; justify-content:center; position:relative; border: 1px solid var(--tech-border, var(--border-color)); box-shadow: 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 24px rgba(102,224,255,0.08); }
-.kpi-ring .ring::after { content:""; position:absolute; width:64px; height:64px; border-radius:50%; background: var(--tech-card, var(--bg-white)); box-shadow: inset 0 0 0 1px var(--tech-border, var(--border-color)); }
+.kpi-ring .ring { width:80px; height:80px; border-radius:50%; background: conic-gradient(var(--primary-color) calc(var(--progress)*1%), rgba(255,138,101,0.12) 0); display:flex; align-items:center; justify-content:center; position:relative; border: 2px solid var(--border-color); box-shadow: 0 2px 8px var(--shadow-soft), inset 0 0 20px rgba(255,138,101,0.08); }
+.kpi-ring .ring::after { content:""; position:absolute; width:64px; height:64px; border-radius:50%; background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%); box-shadow: inset 0 0 0 1px var(--border-color); }
 .kpi-ring .ring span { position:relative; color: var(--tech-text, var(--text-dark)); font-weight:600; font-family: monospace; }
 
 /* 反馈弹窗样式 */
@@ -1060,8 +1262,8 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 }
 
 .star.active {
-  color: #ffd700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  color: #ffb74d;
+  text-shadow: 0 0 10px rgba(255, 183, 77, 0.6);
 }
 
 .rating-text {
@@ -1085,7 +1287,7 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 .feedback-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.15);
 }
 
 .modal-footer {
@@ -1097,39 +1299,45 @@ button:disabled { background-color: #a5d8c0; cursor: not-allowed; box-shadow: no
 }
 
 .btn-secondary {
-  background-color: #f0f0f0;
-  color: var(--text-dark);
+  background: var(--bg-warm);
+  color: var(--text-medium);
   padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px var(--shadow-soft);
 }
 
 .btn-secondary:hover {
-  background-color: #e0e0e0;
+  background: #ffe0cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px var(--shadow-medium);
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
   color: white;
   padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 24px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow-soft);
 }
 
 .btn-primary:hover {
-  background-color: #36a372;
-  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
+  background: linear-gradient(135deg, #ff7043 0%, #f4511e 100%);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
-  background-color: #a5d8c0;
+  background: linear-gradient(135deg, #d7ccc8 0%, #bcaaa4 100%);
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 </style>
