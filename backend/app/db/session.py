@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
@@ -7,8 +8,14 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# connect_args 是专门为 SQLite 准备的
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+def json_serializer(obj):
+    return json.dumps(obj, ensure_ascii=False)
+
+engine = create_engine(
+    DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    json_serializer=json_serializer
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
