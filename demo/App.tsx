@@ -165,7 +165,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans">
-      <aside className="w-full md:w-80 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
+      <aside className="w-full md:w-64 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
         <div className="p-6 border-b border-slate-100/50">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
@@ -195,16 +195,16 @@ const App: React.FC = () => {
           </div>
           <p className="text-base text-slate-600 leading-relaxed">在这里，你的每一份情绪都值得被看见和理解</p>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          <h2 className="text-sm font-semibold text-slate-500 mb-4 px-2">💭 试试这些场景</h2>
-          <div className="space-y-3">
+        <div className="flex-1 overflow-y-auto p-4">
+          <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">💭 选择输入模态</h2>
+          <div className="space-y-2.5">
             {DEMO_SCENARIOS.map(scenario => (
-              <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-4 rounded-xl hover:bg-white hover:shadow-md border border-slate-100 hover:border-pink-200 transition-all group disabled:opacity-50 disabled:hover:shadow-none">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl group-hover:scale-110 transition-transform">{scenario.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-800 text-base mb-0.5">{scenario.title}</h3>
-                    <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{scenario.description}</p>
+              <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-3 rounded-xl hover:bg-white hover:shadow-md border border-slate-100 hover:border-pink-200 transition-all group disabled:opacity-50 disabled:hover:shadow-none">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl group-hover:scale-110 transition-transform">{scenario.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-800 text-sm mb-0.5">{scenario.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{scenario.description}</p>
                   </div>
                 </div>
               </button>
