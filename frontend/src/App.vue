@@ -337,11 +337,11 @@ const peakSentimentChartOption = computed(() => {
       textStyle: { color: '#4e342e', fontSize: 13 },
       formatter: (params) => {
         const p = params[0];
-        const val = Math.abs(p.value);
-        const label = p.name === '积极' ? '最积极时刻' : '最消极时刻';
+        const val = p.name === '积极峰值' ? pos : neg;
+        const label = p.name === '积极峰值' ? '最积极时刻' : '最消极时刻';
         return `<div style="padding:4px 6px;">
           <div style="font-weight:600;margin-bottom:4px;">${label}</div>
-          <div style="font-size:13px;">愉悦度: <b style="color:${p.value >= 0 ? '#66bb6a' : '#ef5350'}">${val.toFixed(3)}</b></div>
+          <div style="font-size:13px;">愉悦度: <b style="color:${p.name === '积极峰值' ? '#66bb6a' : '#ef5350'}">${val.toFixed(3)}</b></div>
         </div>`;
       }
     },
@@ -361,7 +361,7 @@ const peakSentimentChartOption = computed(() => {
     },
     yAxis: { 
       type: 'category', 
-      data: ['积极峰值', '消极峰值'],
+      data: ['消极峰值', '积极峰值'],
       axisTick: { show: false },
       axisLine: { show: false },
       axisLabel: { 
@@ -376,28 +376,18 @@ const peakSentimentChartOption = computed(() => {
       label: {
         show: true,
         position: 'right',
-        formatter: (params) => Math.abs(params.value).toFixed(3),
+        formatter: (params) => {
+          const val = params.name === '积极峰值' ? pos : neg;
+          return val.toFixed(3);
+      },
         fontSize: 13,
         fontWeight: 'bold',
         color: '#4e342e'
       },
       data: [
         { 
-          value: pos, 
-          itemStyle: { 
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 1, y2: 0,
-              colorStops: [
-                { offset: 0, color: '#81c784' },
-                { offset: 1, color: '#66bb6a' }
-              ]
-            },
-            borderRadius: [0, 8, 8, 0]
-          }
-        },
-        { 
-          value: -Math.abs(neg), 
+          value: neg, 
+          name: '消极峰值',
           itemStyle: { 
             color: {
               type: 'linear',
@@ -408,6 +398,21 @@ const peakSentimentChartOption = computed(() => {
               ]
             },
             borderRadius: [8, 0, 0, 8]
+          }
+        },
+        { 
+          value: pos,
+          name: '积极峰值',
+          itemStyle: { 
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 1, y2: 0,
+              colorStops: [
+                { offset: 0, color: '#81c784' },
+                { offset: 1, color: '#66bb6a' }
+              ]
+            },
+            borderRadius: [0, 8, 8, 0]
           }
         }
       ]
@@ -706,21 +711,19 @@ const emotionTrajectoryChartOption = computed(() => {
               <div class="kpi-value" :class="`cognitive-${conversationData.cognitive_state}`">{{ conversationData.cognitive_state }}</div>
             </div>
             <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(conversationData.sentiment_stability * 100) }">
-              <div class="ring"><span>{{ (conversationData.sentiment_stability * 100).toFixed(0) }}%</span></div>
               <div class="kpi-title">情感稳定性</div>
+              <div class="ring"><span>{{ (conversationData.sentiment_stability * 100).toFixed(0) }}%</span></div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-title">趋势</div>
+              <div class="kpi-title">情感趋势</div>
               <div class="kpi-badge" :class="`trend-${conversationData.valence_trend}`">{{ conversationData.valence_trend }}</div>
             </div>
           </div>
           <details class="data-section" open>
-            <summary><h3>详细数据</h3></summary>
+            <summary><h3>对话详细数据</h3></summary>
             <div v-if="conversationData" class="data-content conversation-data">
               <div class="grid-item"><strong>ID:</strong> <span>{{ conversationData.conversation_id.substring(0, 8) }}...</span></div>
               <div class="grid-item"><strong>总消息数:</strong> <span>{{ conversationData.total_messages }}</span></div>
-              <div class="grid-item"><strong>主导情感:</strong> <span>{{ conversationData.dominant_emotion }}</span></div>
-              <div class="grid-item"><strong>愉悦度趋势:</strong> <span>{{ conversationData.valence_trend }}</span></div>
               <div class="grid-item"><strong>情感稳定性:</strong> <span>{{ conversationData.sentiment_stability.toFixed(3) }}</span></div>
               <div class="grid-item"><strong>持续时长 (分):</strong> <span>{{ conversationData.duration_minutes }}</span></div>
               <div class="grid-item grid-span-2">
@@ -806,17 +809,13 @@ const emotionTrajectoryChartOption = computed(() => {
                 <div class="ring"><span>{{ ((1 - profileData.frustration_index) * 100).toFixed(0) }}%</span></div>
                 <div class="kpi-title">抗压力</div>
               </div>
-              <div class="kpi-card kpi-ring" :style="{ '--progress': Math.round(profileData.profile_confidence * 100) }">
-                <div class="ring"><span>{{ (profileData.profile_confidence * 100).toFixed(0) }}%</span></div>
-                <div class="kpi-title">画像可信度</div>
-              </div>
             </div>
+            <summary><h3>用户画像分析</h3></summary>
             <div class="chart-container">
               <v-chart class="chart" :option="emotionProfileChartOption" autoresize />
               <v-chart class="chart" :option="learningStateChartOption" autoresize />
             </div>
             <details class="data-section" open>
-              <summary><h3>画像详细数据</h3></summary>
               <div class="data-content profile-details">
                   <details class="sub-details" open>
                     <summary class="sub-summary">核心指标</summary>
