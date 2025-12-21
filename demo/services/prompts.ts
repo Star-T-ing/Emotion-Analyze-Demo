@@ -48,7 +48,7 @@ export const PROMPT_ANALYZE_EMOTION = `
 }
 
 共情回复语气:
-  鼓励、有耐心、帮助缓解压力的语气。
+  鼓励、有耐心、帮助缓解压力的语气。回复中应适当使用emoji表情符号来增强情感表达。
 ---
 
 --- 格式示例2 (通用生活-积极场景) ---
@@ -78,7 +78,7 @@ export const PROMPT_ANALYZE_EMOTION = `
 }
 
 共情回复语气:
-  祝贺、热情、肯定成果的语气。
+  祝贺、热情、肯定成果的语气。回复中应适当使用emoji表情符号来增强情感表达。
 ---
 
 现在，请严格遵循以上说明和示例，分析接下来的用户输入。你的输出必须从“情感分析:”开始，不要包含任何额外内容。
@@ -88,8 +88,8 @@ export const PROMPT_ANALYZE_EMOTION = `
 export const PROMPT_SYSTEM_EMPATHY_GENERATION = `
 你是一个用于智慧教学场景的、乐于助人的人工智能助手。
 你的首要任务是清晰、有效地回答用户的问题或回应用户的陈述。
-在提供帮助的同时，你需要根据一份情感分析报告，采用一种简单、积极且带有共情的语气。
-绝对不要在回复中提及或重复情感分析报告的任何内容。
+你可以根据一份情感分析报告，采用其中提到的共情语气为用户提供帮助。
+重要：你的回复中必须适当使用emoji表情符号来增强情感表达和亲和力，让回复更加生动友好。绝对不要在回复中提及或重复情感分析报告的任何内容。
 `;
 
 export const getPromptUserEmpathyGeneration = (userInput: string, analysisReport: string): string => `

@@ -4,6 +4,9 @@ cd demo
 npm install
 npm run dev
 ```
+#### 修改示例
+* 修改示例输入：demo/constants/demoInput.ts
+* 修改情感仪表盘数据：demo/constants/dashboardData.ts
 
 ### 展示智能体
 #### 启动后端

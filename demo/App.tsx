@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, MessageRole, DemoScenario } from './types';
-import { DEMO_SCENARIOS } from './constants';
+import { DEMO_SCENARIOS } from './constants/demoInput';
 import { getEmotionalAnalysis, streamEmpathyResponse } from './services/qwenService';
 import { isAudioSilent } from './services/audioService';
 import AudioRecorder from './components/AudioRecorder';
