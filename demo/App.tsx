@@ -5,12 +5,14 @@ import { getEmotionalAnalysis, streamEmpathyResponse } from './services/qwenServ
 import { isAudioSilent } from './services/audioService';
 import AudioRecorder from './components/AudioRecorder';
 import ChatMessageBubble from './components/ChatMessageBubble';
+import ThinkingProcessSidebar from './components/ThinkingProcessSidebar';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
+  const [currentAnalysis, setCurrentAnalysis] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -62,6 +64,12 @@ const App: React.FC = () => {
 
     try {
       const analysis = await getEmotionalAnalysis({ text, audio: audioBlob }, []);
+      
+      console.log('[App] Received analysis from API:', {
+        length: analysis.length,
+        preview: analysis.substring(0, 200),
+        full: analysis
+      });
 
       const modelMsgId = (Date.now() + 1).toString();
       const newModelMsg: ChatMessage = {
@@ -73,6 +81,12 @@ const App: React.FC = () => {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, newModelMsg]);
+      setCurrentAnalysis(analysis);
+      
+      console.log('[App] Set currentAnalysis state:', {
+        length: analysis.length,
+        preview: analysis.substring(0, 100)
+      });
 
       const userInputText = [text, audioBlob ? '（用户通过语音表达了他们的感受）' : ''].filter(Boolean).join('\n');
       
@@ -173,40 +187,41 @@ const App: React.FC = () => {
     setMessages([]);
     setInputVal('');
     setSelectedModality(null);
+    setCurrentAnalysis(undefined);
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans">
-      <aside className="w-full md:w-64 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg md:shadow-none">
+    <div className="flex h-screen bg-slate-50 font-sans">
+      <aside className="w-64 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg flex-shrink-0">
         <div className="p-6 border-b border-slate-100/50">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 via-pink-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50 group-hover:shadow-pink-300/60 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 drop-shadow-sm">
-                  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                </svg>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">共情 AI</h1>
-                <p className="text-xs text-slate-500 mt-0.5">倾听·理解·陪伴</p>
-              </div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 via-pink-400 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50 group-hover:shadow-pink-300/60 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 drop-shadow-sm">
+                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383-.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+              </svg>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
             </div>
-            {messages.length > 0 && (
-              <button
-                onClick={handleNewConversation}
-                disabled={isLoading}
-                className="shrink-0 p-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-800 transition-colors disabled:opacity-50 disabled:hover:bg-transparent group"
-                title="开启新对话"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </button>
-            )}
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">听见 · HearU</h1>
+              <p className="text-xs text-slate-500 mt-0.5">倾听你的声音·理解你的情绪</p>
+            </div>
           </div>
           <p className="text-base text-slate-600 leading-relaxed">在这里，你的每一份情绪都值得被看见和理解</p>
         </div>
+        {messages.length > 0 && (
+          <div className="px-4 pt-4">
+            <button
+              onClick={handleNewConversation}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:hover:shadow-md group font-medium"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:rotate-90 transition-transform">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>开启新对话</span>
+            </button>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-4">
           <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">💭 选择输入模态</h2>
           <div className="space-y-2.5">
@@ -250,7 +265,7 @@ const App: React.FC = () => {
         </div>
         <div className="p-5 border-t border-slate-100/50 bg-gradient-to-t from-slate-50/50 to-transparent">
           <div className="text-sm text-slate-400 text-center leading-relaxed">
-            <span className="inline-block">✨ 多模态情感分析与支持助手</span>
+            <span className="inline-block">✨ 多模态情感理解助手</span>
           </div>
         </div>
       </aside>
@@ -401,10 +416,11 @@ const App: React.FC = () => {
               <textarea value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend(); } }} placeholder="输入文字或录制语音..." disabled={isLoading} className="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder-slate-400 resize-none py-3 max-h-32 min-h-[48px]" rows={1}/>
               <button onClick={handleTextSend} disabled={!inputVal.trim() || isLoading} className="shrink-0 mb-1 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-0.5"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></button>
             </div>
-            <div className="text-center mt-2"><p className="text-sm text-slate-400">💡 AI 助手会尽力理解和支持你，但请记得在需要时寻求专业帮助</p></div>
+            <div className="text-center mt-2"><p className="text-sm text-slate-400">💡 听见 · HearU 会用心倾听和理解你，但请记得在需要时寻求专业帮助</p></div>
           </div>
         </div>
       </main>
+      <ThinkingProcessSidebar analysis={currentAnalysis} />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChatMessage, MessageRole } from '../types';
 import ReactMarkdown from 'react-markdown';
 
@@ -7,7 +7,6 @@ interface Props {
 }
 
 const ChatMessageBubble: React.FC<Props> = ({ message }) => {
-  const [isAnalysisVisible, setAnalysisVisible] = useState(false);
   const isUser = message.role === MessageRole.USER;
   const isModel = message.role === MessageRole.MODEL;
   
@@ -25,17 +24,6 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
     }
   }, [message.audioUrl, message.role, isUser, isModel, message.text, message.isAudioMessage]);
 
-  const renderAnalysis = () => {
-    if (!message.analysis) return null;
-    return (
-      <div className="mt-3 pt-3 border-t border-slate-200/80 text-xs text-slate-700">
-        <div className="whitespace-pre-wrap font-mono bg-slate-50 p-2 rounded">
-            {message.analysis}
-        </div>
-      </div>
-    );
-  };
-
   // Define a wrapper class for the main reply, which might contain markdown.
   const markdownWrapperClasses = isUser 
     ? "prose prose-sm prose-invert max-w-none" 
@@ -44,7 +32,7 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
   return (
     <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] md:max-w-[70%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-        <span className="text-sm text-slate-400 mb-1.5 px-1 font-medium">{isUser ? '你' : '💝 共情 AI'}</span>
+        <span className="text-sm text-slate-400 mb-1.5 px-1 font-medium">{isUser ? '你' : '💝 听见 · HearU'}</span>
         <div className={`p-4 rounded-2xl text-sm md:text-base shadow-sm ${isUser ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-100 rounded-bl-none shadow-md'}`} style={{ minWidth: message.audioUrl && !message.text?.trim() ? '320px' : 'auto' }}>
           
           {/* User audio messages - show first if present */}
@@ -94,18 +82,6 @@ const ChatMessageBubble: React.FC<Props> = ({ message }) => {
                   style={{ width: '100%', display: 'block', minHeight: '40px', minWidth: '280px' }}
                 />
               ) : null}
-            </div>
-          )}
-          
-          {isModel && message.analysis && (
-            <div className="mt-3 pt-3 border-t border-slate-200/80">
-              <button onClick={() => setAnalysisVisible(!isAnalysisVisible)} className="text-sm text-slate-500 hover:text-pink-600 transition-colors font-medium flex items-center gap-1">
-                <span>{isAnalysisVisible ? '收起' : '💭 查看我的思考过程'}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-4 h-4 transition-transform ${isAnalysisVisible ? 'rotate-180' : ''}`}>
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                </svg>
-              </button>
-              {isAnalysisVisible && renderAnalysis()}
             </div>
           )}
         </div>
