@@ -24,4 +24,5 @@ export interface DemoScenario {
   initialInput?: string;
   demoAudioUrl?: string;
   icon: string;
+  exampleTitle?: string;
 }

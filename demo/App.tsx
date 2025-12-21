@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModality, setSelectedModality] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -133,6 +134,16 @@ const App: React.FC = () => {
       handleSend({ text: scenario.initialInput });
     }
   };
+
+  const handleModalityClick = (modalityType: string) => {
+    if (isLoading) return;
+    setMessages([]);
+    setSelectedModality(modalityType);
+  };
+
+  const getModalityScenarios = (modalityType: string) => {
+    return DEMO_SCENARIOS.filter((s) => s.title === modalityType);
+  };
   
   const handleRecordingComplete = async (blob: Blob) => {
     setIsLoading(true);
@@ -161,6 +172,7 @@ const App: React.FC = () => {
     if (isLoading) return;
     setMessages([]);
     setInputVal('');
+    setSelectedModality(null);
   };
 
   return (
@@ -198,17 +210,42 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4">
           <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">💭 选择输入模态</h2>
           <div className="space-y-2.5">
-            {DEMO_SCENARIOS.map(scenario => (
-              <button key={scenario.id} onClick={() => loadDemo(scenario)} disabled={isLoading} className="w-full text-left p-3 rounded-xl hover:bg-white hover:shadow-md border border-slate-100 hover:border-pink-200 transition-all group disabled:opacity-50 disabled:hover:shadow-none">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl group-hover:scale-110 transition-transform">{scenario.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-800 text-sm mb-0.5">{scenario.title}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{scenario.description}</p>
+            {['文本模态', '音频模态', '混合模态'].map((modalityType, idx) => {
+              const icon = ['📝', '🎙️', '🔀'][idx];
+              const description = [
+                '纯文字表达情绪和想法',
+                '通过语音传达真实感受',
+                '文本与语音结合表达',
+              ][idx];
+              const isSelected = selectedModality === modalityType;
+
+              return (
+                <button
+                  key={modalityType}
+                  onClick={() => handleModalityClick(modalityType)}
+                  disabled={isLoading}
+                  className={`w-full text-left p-3 rounded-xl hover:bg-white hover:shadow-md border transition-all group disabled:opacity-50 disabled:hover:shadow-none ${
+                    isSelected
+                      ? 'bg-white shadow-md border-pink-300'
+                      : 'border-slate-100 hover:border-pink-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl group-hover:scale-110 transition-transform">
+                      {icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-800 text-sm mb-0.5">
+                        {modalityType}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        {description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="p-5 border-t border-slate-100/50 bg-gradient-to-t from-slate-50/50 to-transparent">
@@ -219,22 +256,126 @@ const App: React.FC = () => {
       </aside>
       <main className="flex-1 flex flex-col h-full relative">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
-          {messages.length === 0 ? (
+          {messages.length === 0 && !selectedModality ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
               <div className="w-28 h-28 bg-gradient-to-br from-pink-100 via-rose-100 to-indigo-100 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-pink-100/50">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-pink-500">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-12 h-12 text-pink-500"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                  />
                 </svg>
               </div>
-              <h2 className="text-3xl font-semibold text-slate-800 mb-3">今天过得怎么样？</h2>
-              <p className="max-w-lg text-base text-slate-600 leading-relaxed mb-2">无论是开心、难过、焦虑还是困惑</p>
-              <p className="max-w-lg text-base text-slate-600 leading-relaxed">我都在这里，用心倾听你的每一个字、每一句话</p>
+              <h2 className="text-3xl font-semibold text-slate-800 mb-3">
+                今天过得怎么样？
+              </h2>
+              <p className="max-w-lg text-base text-slate-600 leading-relaxed mb-2">
+                无论是开心、难过、焦虑还是困惑
+              </p>
+              <p className="max-w-lg text-base text-slate-600 leading-relaxed">
+                我都在这里，用心倾听你的每一个字、每一句话
+              </p>
               <div className="mt-8 flex items-center gap-2 text-sm text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-5 h-5"
+                >
                   <path d="M3.505 2.365A41.369 41.369 0 019 2c1.863 0 3.697.124 5.495.365 1.247.167 2.18 1.108 2.435 2.268a4.45 4.45 0 00-.577-.069 43.141 43.141 0 00-4.706 0C9.229 4.696 7.5 6.727 7.5 8.998v2.24c0 1.413.67 2.735 1.76 3.562l-2.98 2.98A.75.75 0 015 17.25v-3.443c-.501-.048-1-.106-1.495-.172C2.033 13.438 1 12.162 1 10.72V5.28c0-1.441 1.033-2.717 2.505-2.914z" />
                   <path d="M14 6c-.762 0-1.52.02-2.271.062C10.157 6.148 9 7.472 9 8.998v2.24c0 1.519 1.147 2.839 2.71 2.935.214.013.428.024.642.034.2.009.385.09.518.224l2.35 2.35a.75.75 0 001.28-.531v-2.07c1.453-.195 2.5-1.463 2.5-2.915V8.998c0-1.526-1.157-2.85-2.729-2.936A41.645 41.645 0 0014 6z" />
                 </svg>
                 <span>你可以打字，也可以用语音</span>
+              </div>
+            </div>
+          ) : messages.length === 0 && selectedModality ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="max-w-2xl w-full">
+                <div className="mb-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-100 to-indigo-100 rounded-full mb-4">
+                    <span className="text-2xl">
+                      {selectedModality === '文本模态'
+                        ? '📝'
+                        : selectedModality === '音频模态'
+                          ? '🎙️'
+                          : '🔀'}
+                    </span>
+                    <span className="font-semibold text-slate-700">
+                      {selectedModality}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-semibold text-slate-800 mb-3">
+                    选择一个场景开始
+                  </h2>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {getModalityScenarios(selectedModality).map((scenario) => (
+                    <button
+                      key={scenario.id}
+                      onClick={() => loadDemo(scenario)}
+                      disabled={isLoading}
+                      className="group p-6 bg-white rounded-2xl border-2 border-slate-100 hover:border-pink-300 hover:shadow-lg transition-all text-left disabled:opacity-50 disabled:hover:border-slate-100 disabled:hover:shadow-none"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-100 to-indigo-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                          <span className="text-xl">
+                            {scenario.id.includes('text')
+                              ? '📝'
+                              : scenario.id.includes('audio')
+                                ? '🎙️'
+                                : '🔀'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-slate-800 text-lg mb-1">
+                            {scenario.exampleTitle}
+                          </h3>
+                          {scenario.initialInput && (
+                            <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                              {scenario.initialInput}
+                            </p>
+                          )}
+                          {scenario.demoAudioUrl && !scenario.initialInput && (
+                            <p className="text-sm text-slate-500 italic">
+                              点击播放语音示例
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-pink-600 font-medium">
+                        <span>开始对话</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setSelectedModality(null)}
+                  className="mt-6 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  ← 返回选择模态
+                </button>
               </div>
             </div>
           ) : (
