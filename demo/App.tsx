@@ -6,6 +6,7 @@ import { isAudioSilent } from './services/audioService';
 import AudioRecorder from './components/AudioRecorder';
 import ChatMessageBubble from './components/ChatMessageBubble';
 import ThinkingProcessSidebar from './components/ThinkingProcessSidebar';
+import EmotionalStatisticsDashboard from './components/EmotionalStatisticsDashboard';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -13,6 +14,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModality, setSelectedModality] = useState<string | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<string | undefined>(undefined);
+  const [currentView, setCurrentView] = useState<'chat' | 'dashboard'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -190,6 +192,10 @@ const App: React.FC = () => {
     setCurrentAnalysis(undefined);
   };
 
+  const toggleView = () => {
+    setCurrentView(prev => prev === 'chat' ? 'dashboard' : 'chat');
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
       <aside className="w-64 bg-gradient-to-b from-white to-slate-50/30 border-r border-slate-200 flex flex-col z-10 shadow-lg flex-shrink-0">
@@ -202,14 +208,14 @@ const App: React.FC = () => {
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">听见 · HearU</h1>
-              <p className="text-xs text-slate-500 mt-0.5">倾听你的声音·理解你的情绪</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-600 bg-clip-text text-transparent tracking-tight drop-shadow-sm">听见 · HearU</h1>
+              <p className="text-xs bg-gradient-to-r from-slate-500 to-slate-400 bg-clip-text text-transparent mt-0.5 font-medium">倾听你的声音·理解你的情绪</p>
             </div>
           </div>
-          <p className="text-base text-slate-600 leading-relaxed">在这里，你的每一份情绪都值得被看见和理解</p>
+          <p className="text-base text-slate-600 leading-relaxed">✨ 多模态情感分析大模型</p>
         </div>
         {messages.length > 0 && (
-          <div className="px-4 pt-4">
+          <div className="px-4 pt-4 space-y-2">
             <button
               onClick={handleNewConversation}
               disabled={isLoading}
@@ -219,6 +225,15 @@ const App: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               <span>开启新对话</span>
+            </button>
+            <button
+              onClick={toggleView}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all group font-medium"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
+              <span>{currentView === 'chat' ? '查看统计' : '返回对话'}</span>
             </button>
           </div>
         )}
@@ -265,12 +280,14 @@ const App: React.FC = () => {
         </div>
         <div className="p-5 border-t border-slate-100/50 bg-gradient-to-t from-slate-50/50 to-transparent">
           <div className="text-sm text-slate-400 text-center leading-relaxed">
-            <span className="inline-block">✨ 多模态情感理解助手</span>
+            <span className="inline-block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold">🚀 BUAA · 多模态情感AI</span>
           </div>
         </div>
       </aside>
       <main className="flex-1 flex flex-col h-full relative">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
+        {currentView === 'chat' ? (
+          <>
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
           {messages.length === 0 && !selectedModality ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4">
               <div className="w-28 h-28 bg-gradient-to-br from-pink-100 via-rose-100 to-indigo-100 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-pink-100/50">
@@ -419,6 +436,10 @@ const App: React.FC = () => {
             <div className="text-center mt-2"><p className="text-sm text-slate-400">💡 听见 · HearU 会用心倾听和理解你，但请记得在需要时寻求专业帮助</p></div>
           </div>
         </div>
+          </>
+        ) : (
+          <EmotionalStatisticsDashboard onToggleView={toggleView} />
+        )}
       </main>
       <ThinkingProcessSidebar analysis={currentAnalysis} />
     </div>

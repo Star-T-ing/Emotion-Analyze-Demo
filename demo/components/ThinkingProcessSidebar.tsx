@@ -170,7 +170,7 @@ const ThinkingProcessSidebar: React.FC<Props> = ({ analysis }) => {
           <span className="text-xl">🧠</span>
           思考过程
         </h2>
-        <p className="text-xs text-slate-500 mt-1">AI 的情感分析与推理</p>
+        <p className="text-xs text-slate-500 mt-1">大模型情感理解与共情分析</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
