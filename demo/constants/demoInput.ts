@@ -22,7 +22,7 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     id: 'audio-only-1',
     title: '音频模态',
     description: '通过语音传达真实感受',
-    demoAudioUrl: '/audio/exam-anxiety.wav',
+    demoAudioUrl: '/audio/audio-only-1.wav',
     icon: '🎙️',
     exampleTitle: '考试焦虑'
   },
@@ -30,7 +30,7 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     id: 'audio-only-2',
     title: '音频模态',
     description: '通过语音传达真实感受',
-    demoAudioUrl: '/audio/parent-pressure.wav',
+    demoAudioUrl: '/audio/audio-only-2.wav',
     icon: '🎙️',
     exampleTitle: '家庭压力'
   },
@@ -39,7 +39,7 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     title: '混合模态',
     description: '文本与语音结合表达',
     initialInput: "物理的浮力概念我怎么都理解不了😵。老师上课讲的时候感觉听懂了✅，但一做题就全忘了🤦。眼看就要期中考试了，我真的很担心😟。",
-    demoAudioUrl: '/audio/learning-difficulty.wav',
+    demoAudioUrl: '/audio/multimodal-1.wav',
     icon: '🔀',
     exampleTitle: '学习困难'
   },
@@ -48,7 +48,7 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
     title: '混合模态',
     description: '文本与语音结合表达',
     initialInput: "爸妈总是拿我和别人家的孩子比较😤，说我成绩不够好，不够努力。可是我已经很努力了💪，每天学到很晚，但成绩还是上不去。我觉得自己永远达不到他们的期望😢。",
-    demoAudioUrl: '/audio/expectation-pressure.wav',
+    demoAudioUrl: '/audio/multimodal-2.wav',
     icon: '🔀',
     exampleTitle: '期望压力'
   }
