@@ -33,6 +33,14 @@ export const getEmotionalAnalysis = async (
     input: { text?: string, audio?: Blob },
     history: MessageHistory[]
 ): Promise<string> => {
+  console.log('[DEBUG] getEmotionalAnalysis input:', {
+    hasText: !!input.text,
+    hasAudio: !!input.audio,
+    textLength: input.text?.length,
+    audioSize: input.audio?.size,
+    audioType: input.audio?.type
+  });
+
   const userContent: any[] = [];
 
   if (input.audio) {
@@ -40,15 +48,33 @@ export const getEmotionalAnalysis = async (
     if (!audioBase64) throw new Error("录制的音频为空或处理失败，请重试。");
     const dataUri = `data:;base64,${audioBase64}`;
     const format = input.audio.type?.split('/')[1]?.split(';')[0] || 'webm';
+    
+    // 优化提示文本：明确告知是否为混合模态
+    const audioPrompt = input.text 
+      ? "请分析这段音频中的情绪和内容，并结合下面的文本一起理解。"
+      : "请分析这段音频中的情绪和内容。";
+    
     userContent.push(
       { "type": "input_audio", "input_audio": { "data": dataUri, "format": format } },
-      { "type": "text", "text": "请分析这段音频中的情绪和内容。" }
+      { "type": "text", "text": audioPrompt }
     );
   }
 
   if (input.text) {
     userContent.push({ "type": "text", "text": input.text });
   }
+
+  console.log('[DEBUG] userContent structure:', {
+    length: userContent.length,
+    types: userContent.map(item => item.type),
+    hasAudio: userContent.some(item => item.type === 'input_audio'),
+    textCount: userContent.filter(item => item.type === 'text').length,
+    preview: userContent.map(item => ({
+      type: item.type,
+      textPreview: item.text?.substring(0, 50),
+      hasAudioData: !!item.input_audio
+    }))
+  });
 
   const payload = {
     model: "qwen3-omni-flash",

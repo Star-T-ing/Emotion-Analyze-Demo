@@ -1,14 +1,14 @@
-### 展示情感大模型
+### 演示情感大模型
 ```bash
 cd demo
 npm install
 npm run dev
 ```
-#### 修改示例
-* 修改示例输入：demo/constants/demoInput.ts
+
+* 修改示例场景：demo/constants/demoInput.ts
 * 修改情感仪表盘数据：demo/constants/dashboardData.ts
 
-### 展示智能体
+### 演示智能体
 #### 启动后端
 ```bash
 cd backend
