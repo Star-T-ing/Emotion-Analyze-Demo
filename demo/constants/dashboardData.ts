@@ -38,32 +38,30 @@ export const EMOTION_COLORS = {
 
 // Emotional trajectory data with 10 data points showing varied emotions and valence progression
 export const DEMO_TRAJECTORY_DATA: TrajectoryDataPoint[] = [
-  { messageNumber: 1, valence: 45, emotion: '焦虑', emotionColor: '#f59e0b' },
-  { messageNumber: 2, valence: 38, emotion: '沮丧', emotionColor: '#ef4444' },
-  { messageNumber: 3, valence: 42, emotion: '困惑', emotionColor: '#8b5cf6' },
-  { messageNumber: 4, valence: 55, emotion: '好奇', emotionColor: '#3b82f6' },
-  { messageNumber: 5, valence: 62, emotion: '好奇', emotionColor: '#3b82f6' },
-  { messageNumber: 6, valence: 70, emotion: '自信', emotionColor: '#10b981' },
-  { messageNumber: 7, valence: 75, emotion: '兴奋', emotionColor: '#ec4899' },
-  { messageNumber: 8, valence: 68, emotion: '自信', emotionColor: '#10b981' },
+  { messageNumber: 1, valence: 25, emotion: '焦虑', emotionColor: '#f59e0b' },
+  { messageNumber: 2, valence: 18, emotion: '沮丧', emotionColor: '#ef4444' },
+  { messageNumber: 3, valence: 32, emotion: '困惑', emotionColor: '#8b5cf6' },
+  { messageNumber: 4, valence: 57, emotion: '好奇', emotionColor: '#3b82f6' },
+  { messageNumber: 5, valence: 79, emotion: '自信', emotionColor: '#10b981' },
+  { messageNumber: 6, valence: 85, emotion: '兴奋', emotionColor: '#ec4899' },
 ];
 
-// Emotion distribution data for radar chart
+// Emotion distribution data for radar chart - adjusted based on valence trajectory
 export const DEMO_EMOTION_DISTRIBUTION: EmotionDistribution = {
-  anxiety: 65,      // 焦虑
-  confusion: 45,    // 困惑
-  frustration: 55,  // 沮丧
-  curiosity: 72,    // 好奇
-  confidence: 68,   // 自信
-  excitement: 80,   // 兴奋
+  anxiety: 35,      // 焦虑 - reduced as valence improves over time
+  confusion: 50,    // 困惑 - lower as understanding develops
+  frustration: 65,  // 沮丧 - decreased with positive progression
+  curiosity: 58,    // 好奇 - high as engagement increases
+  confidence: 82,   // 自信 - increased with positive valence trend
+  excitement: 85,   // 兴奋 - highest reflecting final positive state
 };
 
-// Cognitive state data for radar chart
+// Cognitive state data for radar chart - reflecting overall positive trajectory
 export const DEMO_COGNITIVE_STATE: CognitiveState = {
-  engagement: 75,   // 投入度
-  stability: 58,    // 稳定性
-  arousal: 70,      // 唤醒度
-  control: 62,      // 掌控感
-  resilience: 55,   // 抗压力
-  excitement: 78,   // 兴奋度
+  engagement: 82,   // 投入度 - high due to curiosity and positive progression
+  arousal: 88,      // 唤醒度 - elevated with excitement and engagement
+  control: 72,      // 掌控感 - increased with confidence growth
+  stability: 65,    // 稳定性 - improved as emotions stabilize positively
+  resilience: 68,   // 抗压力 - strengthened through positive experience
+  excitement: 85,   // 兴奋度 - matches high final valence state
 };
